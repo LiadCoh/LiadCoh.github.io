@@ -209,23 +209,53 @@ canvas{border-radius:20px;border:4px solid #4aa8e0;box-shadow:0 0 50px #4aa8e055
   </div>
 
   <!-- START -->
-  <div class="ov show" id="startOv">
-    <div class="mainpanel" id="startMain">
-      <h1>קפצן! 🐸</h1>
-      <p>קפוץ בין חפצים — אל תיגע ברצפה!<br>עצור יותר מדי = חזרה לאפס. הגע ל-125 = שלב הבא!</p>
-      <div class="mode-row">
-        <button class="mode-btn solo" id="btn1p">🎮 שחקן אחד<div class="mode-sub">A/D לזוז, W לקפוץ</div></button>
-        <button class="mode-btn duo"  id="btn2p">👥 שני שחקנים<div class="mode-sub">שחקן 1: W/A/D · שחקן 2: I/J/L</div></button>
-        <button class="mode-btn online" id="btnOnline">🌐 אונליין<div class="mode-sub">מחשבים שונים</div></button>
-      </div>
-      <button class="gbtn gray" id="btnSettings" style="margin-top:8px;font-size:15px;padding:8px 22px;">⚙️ הגדרות</button>
+<div class="ov show" id="startOv">
+  <div class="mainpanel" id="startMain">
+    <h1>קפצן! 🐸</h1>
+    <p>קפוץ בין חפצים — אל תיגע ברצפה!<br>עצור יותר מדי = חזרה לאפס. הגע ל-125 = שלב הבא!</p>
+    <div class="mode-row">
+      <button class="mode-btn solo" id="btn1p">🎮 שחקן אחד<div class="mode-sub">A/D לזוז, W לקפוץ</div></button>
+      <button class="mode-btn duo"  id="btn2p">👥 שני שחקנים<div class="mode-sub">שחקן 1: W/A/D · שחקן 2: I/J/L</div></button>
+      <button class="mode-btn online" id="btnOnline">🌐 אונליין<div class="mode-sub">מחשבים שונים</div></button>
     </div>
-    <div class="setpanel" id="startSettings">
-      <h1 style="font-size:36px;margin-bottom:8px">⚙️ הגדרות</h1>
-      <div class="sbox" id="settingsContent"></div>
-      <button class="gbtn blue" id="btnBackFromSettings" style="margin-top:14px">← חזור</button>
-    </div>
+    <button class="gbtn gray" id="btnSettings" style="margin-top:8px;font-size:15px;padding:8px 22px;">⚙️ הגדרות</button>
+
+    <!-- כפתור חזרה לעמוד הראשי עם אייקון 🏠 ואנימציה -->
+    <a href="index.html" style="text-decoration:none;">
+      <button class="gbtn gray home-btn" style="margin-top:8px; font-size:15px; padding:8px 22px; display:flex; align-items:center; gap:6px;">
+        🏠 חזור לעמוד הראשי
+      </button>
+    </a>
   </div>
+
+  <div class="setpanel" id="startSettings">
+    <h1 style="font-size:36px;margin-bottom:8px">⚙️ הגדרות</h1>
+    <div class="sbox" id="settingsContent"></div>
+    <button class="gbtn blue" id="btnBackFromSettings" style="margin-top:14px">← חזור</button>
+  </div>
+</div>
+
+<!-- סגנונות אנימציה -->
+<style>
+  /* אפקט ריחוף על כפתורי הבית */
+  .home-btn:hover {
+    background-color: #ccc; /* בהיר יותר בעת ריחוף */
+    transform: translateY(+4px); /* קפיצה קטנה */
+    transition: transform 0.2s, background-color 0.2s;
+  }
+
+  .home-btn:active {
+    transform: translateY(0px); /* חזרה למקום בלחיצה */
+  }
+</style>
+
+  </div>
+  <div class="setpanel" id="startSettings">
+    <h1 style="font-size:36px;margin-bottom:8px">⚙️ הגדרות</h1>
+    <div class="sbox" id="settingsContent"></div>
+    <button class="gbtn blue" id="btnBackFromSettings" style="margin-top:14px">← חזור</button>
+  </div>
+</div>
 
   <!-- PAUSE -->
   <div class="ov" id="pauseOv">
