@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>הגנת הכוכב</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:Arial,sans-serif; overflow:hidden; user-select:none; }
+#gc { position:relative; width:100vw; height:100vh; }
+canvas { display:block; }
+#ui { position:absolute; bottom:0; left:0; right:0; height:120px; background:linear-gradient(180deg,#0a0a2a,#0d0d33); border-top:2px solid #3355ff; display:flex; align-items:center; justify-content:center; gap:14px; padding:0 16px; }
+.slot { width:90px; height:90px; background:#111133; border:2px solid #4466ff; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:grab; position:relative; transition:all .2s; flex-shrink:0; }
+.slot:hover { border-color:#88aaff; transform:scale(1.06); box-shadow:0 0 15px #4466ff88; }
+.slot .ic { font-size:30px; }
+.slot .nm { font-size:8px; color:#aabbff; text-align:center; margin-top:2px; line-height:1.2; }
+.slot .ct { position:absolute; top:3px; right:6px; font-size:11px; color:#ffdd44; font-weight:bold; }
+.slot.empty { opacity:.3; cursor:not-allowed; }
+#coolWrap { position:absolute; bottom:125px; left:50%; transform:translateX(-50%); text-align:center; display:none; z-index:10; }
+#coolLabel { color:#ffaa00; font-size:12px; margin-bottom:3px; }
+#coolBar { width:200px; height:8px; background:#333; border-radius:4px; }
+#coolFill { height:100%; background:linear-gradient(90deg,#ff4444,#ffdd00); border-radius:4px; }
+#stats { position:absolute; top:8px; left:8px; z-index:10; }
+#statsBox { background:rgba(0,0,30,.82); padding:7px 13px; border-radius:8px; border:1px solid #3355ff; color:#aabbff; font-size:13px; }
+#lvlBadge { position:absolute; top:8px; right:8px; background:rgba(0,0,50,.85); border:2px solid #ffdd44; border-radius:10px; padding:6px 14px; color:#ffdd44; font-size:15px; font-weight:bold; z-index:10; }
+#dp { position:absolute; pointer-events:none; font-size:38px; display:none; transform:translate(-50%,-50%); z-index:300; }
+.overlay { position:absolute; inset:0; background:rgba(0,0,0,.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:200; }
+.overlay h1 { font-size:52px; margin-bottom:12px; }
+.overlay p { font-size:16px; color:#aabbff; margin-bottom:22px; text-align:center; line-height:1.9; max-width:480px; }
+.btn { padding:13px 34px; font-size:16px; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; margin:5px; transition:transform .15s; }
+.btn:hover { transform:scale(1.05); }
+.bb { background:linear-gradient(135deg,#3355ff,#6622cc); }
+.bg { background:linear-gradient(135deg,#22aa44,#116633); }
+.br { background:linear-gradient(135deg,#ff4444,#aa1111); }
+.bk { background:linear-gradient(135deg,#445566,#223344); }
+.by { background:linear-gradient(135deg,#aa8800,#776600); }
+#settPanel { position:absolute; inset:0; background:rgba(0,0,0,.95); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:250; }
+#settPanel h2 { font-size:30px; color:#44aaff; margin-bottom:22px; }
+.sr { display:flex; align-items:center; gap:14px; margin:11px 0; }
+.sr label { color:#aabbff; font-size:14px; min-width:120px; text-align:right; }
+.sr input[type=range] { width:190px; accent-color:#4466ff; cursor:pointer; }
+.sr span { color:#ffdd44; font-size:13px; min-width:55px; }
+.bgOpts { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-width:400px; }
+.bgOpt { width:68px; height:48px; border-radius:8px; border:3px solid transparent; cursor:pointer; transition:border .15s; display:flex; align-items:center; justify-content:center; font-size:22px; }
+.bgOpt.sel { border-color:#ffdd44; }
+.bgOpt:hover { border-color:#aabbff; }
+.toggle-btn { padding:8px 22px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:bold; border:2px solid #4466ff; background:#111133; color:#aabbff; transition:all .2s; min-width:110px; text-align:center; }
+.toggle-btn.on { background:#223366; color:#44ddff; border-color:#44aaff; }
+.toggle-btn.off { background:#221111; color:#885555; border-color:#663333; }
+#lvlFlash { position:absolute; inset:0; background:rgba(255,220,50,.1); display:none; z-index:150; pointer-events:none; border:8px solid #ffdd44; animation:flash .7s 2; }
+@keyframes flash { 0%,100%{opacity:0} 50%{opacity:1} }
+</style>
+</head>
+<body>
+<div id="gc">
+  <canvas id="cv"></canvas>
+  <div id="stats"><div id="statsBox">טוען...</div></div>
+  <div id="lvlBadge">שלב 1</div>
+  <div id="coolWrap"><div id="coolLabel">ממתין...</div><div id="coolBar"><div id="coolFill" style="width:0%"></div></div></div>
+  <div id="ui"></div>
+  <div id="dp"></div>
+  <div id="lvlFlash"></div>
+
+  <!-- SETTINGS -->
+  <div id="settPanel">
+    <h2>⚙️ הגדרות</h2>
+    <div class="sr"><label>רקע:</label><div class="bgOpts" id="bgOpts"></div></div>
+    <div class="sr">
+      <label>זמן טעינה:</label>
+      <input type="range" id="coolSlider" min="1" max="5" step="0.5" value="4.5" oninput="uCool()">
+      <span id="coolVal">4.5 שנ'</span>
+    </div>
+    <div class="sr">
+      <label>צלילים:</label>
+      <div id="soundToggle" class="toggle-btn on" onclick="toggleSetting('sounds')">🔊 פועל</div>
+    </div>
+    <div class="sr">
+      <label>מוזיקה:</label>
+      <div id="musicToggle" class="toggle-btn on" onclick="toggleSetting('music')">🎵 פועל</div>
+    </div>
+    <div style="margin-top:22px;display:flex;gap:12px;">
+      <button class="btn bb" onclick="saveSettings()">✔ שמור וחזור</button>
+    </div>
+  </div>
+
+  <!-- MAIN OVERLAY -->
+<div id="overlay" class="overlay">
+  <h1 style="color:#44aaff">🛸 הגנת הכוכב</h1>
+  <p>
+    40 חייזרים בדרך בכל שלב!<br>
+    גרור נשקים מהתפריט התחתון למסלול.<br>
+    הרוג הכל — עבור לשלב הבא!
+  </p>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+    <button class="btn bb" onclick="startGame(1)">▶ התחל משחק</button>
+    <button class="btn bk" onclick="openSettings()">⚙️ הגדרות</button>
+
+    <!-- כפתור חדש -->
+    <button class="btn bb" onclick="window.location.href='index.html'">
+      🏠 חזרה לעמוד הבית
+    </button>
+  </div>
+</div>
+
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const UI_H=120;
+
+// ─── BACKGROUNDS ───────────────────────────────────────────
+const BGS=[
+  {id:'space',  icon:'🌌', grid:'#0f0f2a',
+   draw:(W,H)=>{const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H));g.addColorStop(0,'#0d0d22');g.addColorStop(1,'#04040e');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}},
+  {id:'jungle', icon:'🌿', grid:'#0a1a0a',
+   draw:(W,H)=>{const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#091509');g.addColorStop(1,'#0c2009');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}},
+  {id:'desert', icon:'🏜️', grid:'#1e1508',
+   draw:(W,H)=>{const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#221804');g.addColorStop(1,'#160f00');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}},
+  {id:'ice',    icon:'❄️', grid:'#0a1530',
+   draw:(W,H)=>{const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#07101f');g.addColorStop(1,'#040a14');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}},
+  {id:'lava',   icon:'🌋', grid:'#1a0a00',
+   draw:(W,H)=>{const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1a0500');g.addColorStop(1,'#0a0200');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}},
+];
+let settings={bgId:'space',coolSec:4.5,sounds:true,music:true};
+let stars=[];
+
+function toggleSetting(key){
+  settings[key]=!settings[key];
+  const id=key==='sounds'?'soundToggle':'musicToggle';
+  const el=document.getElementById(id);
+  if(settings[key]){el.className='toggle-btn on';el.textContent=key==='sounds'?'🔊 פועל':'🎵 פועל';}
+  else{el.className='toggle-btn off';el.textContent=key==='sounds'?'🔇 כבוי':'🎵 כבוי';}
+  if(key==='music'){settings.music?startMusic():stopMusic();}
+}
+
+function buildSettUI(){
+  const c=document.getElementById('bgOpts');c.innerHTML='';
+  BGS.forEach(b=>{
+    const d=document.createElement('div');
+    d.className='bgOpt'+(settings.bgId===b.id?' sel':'');
+    d.textContent=b.icon;d.dataset.id=b.id;d.title=b.id;
+    d.onclick=()=>{document.querySelectorAll('.bgOpt').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');settings.bgId=b.id;};
+    c.appendChild(d);
+  });
+  document.getElementById('coolSlider').value=settings.coolSec;
+  document.getElementById('coolVal').textContent=settings.coolSec+" שנ'";
+  // sync toggles
+  const st=document.getElementById('soundToggle'),mt=document.getElementById('musicToggle');
+  st.className='toggle-btn '+(settings.sounds?'on':'off');st.textContent=settings.sounds?'🔊 פועל':'🔇 כבוי';
+  mt.className='toggle-btn '+(settings.music?'on':'off');mt.textContent=settings.music?'🎵 פועל':'🎵 כבוי';
+}
+function uCool(){const v=+document.getElementById('coolSlider').value;document.getElementById('coolVal').textContent=v+" שנ'";}
+function openSettings(){
+  const wasRunning=running;running=false;
+  buildSettUI();
+  document.getElementById('settPanel').style.display='flex';
+  document.getElementById('settPanel').dataset.wasRunning=wasRunning?'1':'0';
+  document.getElementById('overlay').style.display='none';
+}
+function saveSettings(){
+  settings.bgId=document.querySelector('.bgOpt.sel')?.dataset.id||'space';
+  settings.coolSec=+document.getElementById('coolSlider').value;
+  CM=settings.coolSec*60;
+  document.getElementById('settPanel').style.display='none';
+  const wr=document.getElementById('settPanel').dataset.wasRunning;
+  if(wr==='1'){running=true;requestAnimationFrame(tick);}
+  else{document.getElementById('overlay').style.display='flex';}
+}
+
+// ─── AUDIO ─────────────────────────────────────────────────
+let audioCtx=null,musicNodes={osc:null,gain:null};
+function getACtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playSound(type){
+  if(!settings.sounds)return;
+  try{
+    const a=getACtx(),g=a.createGain();g.connect(a.destination);const o=a.createOscillator();o.connect(g);
+    if(type==='shoot'){o.frequency.setValueAtTime(440,a.currentTime);o.frequency.exponentialRampToValueAtTime(220,a.currentTime+.08);g.gain.setValueAtTime(.1,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.1);o.start();o.stop(a.currentTime+.1);}
+    else if(type==='die'){o.frequency.setValueAtTime(280,a.currentTime);o.frequency.exponentialRampToValueAtTime(70,a.currentTime+.18);g.gain.setValueAtTime(.15,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.2);o.type='sawtooth';o.start();o.stop(a.currentTime+.2);}
+    else if(type==='place'){o.frequency.setValueAtTime(600,a.currentTime);o.frequency.exponentialRampToValueAtTime(900,a.currentTime+.12);g.gain.setValueAtTime(.09,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.14);o.start();o.stop(a.currentTime+.14);}
+    else if(type==='levelup'){[523,659,784,1047].forEach((f,i)=>{const o2=a.createOscillator(),g2=a.createGain();o2.connect(g2);g2.connect(a.destination);o2.frequency.value=f;g2.gain.setValueAtTime(.12,a.currentTime+i*.12);g2.gain.exponentialRampToValueAtTime(.001,a.currentTime+i*.12+.18);o2.start(a.currentTime+i*.12);o2.stop(a.currentTime+i*.12+.2);});}
+  }catch(e){}
+}
+function startMusic(){
+  if(!settings.music)return;
+  try{
+    const a=getACtx();stopMusic();
+    const gain=a.createGain();gain.gain.value=0.04;gain.connect(a.destination);
+    const osc=a.createOscillator();osc.type='sine';
+    const notes=[130,146,164,174,196,220,246,261];let ni=0;
+    const iv=setInterval(()=>{if(!settings.music||!musicNodes.osc){clearInterval(iv);return;}osc.frequency.setValueAtTime(notes[ni++%notes.length],a.currentTime);},480);
+    osc.connect(gain);osc.start();
+    musicNodes={osc,gain,iv};
+  }catch(e){}
+}
+function stopMusic(){
+  try{if(musicNodes.iv)clearInterval(musicNodes.iv);if(musicNodes.osc){musicNodes.osc.stop();musicNodes.osc=null;}}catch(e){}
+}
+
+// ─── PAUSE MENU ────────────────────────────────────────────
+function openPause(){
+  if(document.getElementById('settPanel').style.display==='flex')return;
+  if(!running&&document.getElementById('overlay').style.display==='flex')return;
+  running=false;
+  const ov=document.getElementById('overlay');ov.style.display='flex';
+  ov.innerHTML=`
+    <h1 style="color:#44aaff;font-size:40px;margin-bottom:20px">⏸ השהיה</h1>
+    <div style="display:flex;flex-direction:column;gap:13px;width:270px;">
+      <button class="btn bb" style="width:100%;font-size:16px" onclick="resumeGame()">▶ חזרה למשחק</button>
+      <button class="btn bk" style="width:100%;font-size:16px" onclick="openSettings()">⚙️ הגדרות</button>
+      <button class="btn br" style="width:100%;font-size:16px" onclick="goMainMenu()">🏠 תפריט ראשי</button>
+    </div>`;
+}
+function resumeGame(){
+  document.getElementById('overlay').style.display='none';
+  running=true;requestAnimationFrame(tick);
+}
+function goMainMenu(){
+  running=false;stopMusic();
+  aliens=[];towers=[];bullets=[];giants=[];particles=[];
+  const ov=document.getElementById('overlay');ov.style.display='flex';
+  ov.innerHTML=`
+    <h1 style="color:#44aaff">🛸 הגנת הכוכב</h1>
+    <p>40 חייזרים בדרך בכל שלב!<br>גרור נשקים מהתפריט התחתון למסלול.<br>הרוג הכל — עבור לשלב הבא!</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn bb" onclick="startGame(1)">▶ התחל משחק</button>
+      <button class="btn bk" onclick="openSettings()">⚙️ הגדרות</button>
+    </div>`;
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(document.getElementById('settPanel').style.display==='flex'){saveSettings();}
+    else{openPause();}
+  }
+});
+
+// ─── WEAPONS ───────────────────────────────────────────────
+const WT=[
+  {id:'cannon',  name:'תותח',       icon:'💣',dmg:6.5, max:4,shots:4,range:185,fr:60, color:'#ff6600',giant:false,melee:false},
+  {id:'rifle',   name:'חייל רובה',  icon:'🔫',dmg:2,   max:7,shots:4,range:155,fr:45, color:'#44ff44',giant:false,melee:false},
+  {id:'sword',   name:'חייל חרב',   icon:'⚔️', dmg:2.5, max:8,shots:4,range:80,  fr:50, color:'#ffdd00',giant:false,melee:true },
+  {id:'giant',   name:'ענק',        icon:'👾',dmg:20,  max:2,shots:0,range:60,  fr:28, color:'#ff44ff',giant:true, melee:false},
+  {id:'missile', name:'תותח טילים',icon:'🚀',dmg:9.5, max:9,shots:4,range:220,fr:75, color:'#ff4444',giant:false,melee:false},
+  {id:'laser',   name:'לייזר',      icon:'⚡',dmg:40,  max:1,shots:4,range:265,fr:110,color:'#00ffff',giant:false,melee:false},
+];
+
+// ─── STATE ─────────────────────────────────────────────────
+let path=[],aliens=[],towers=[],bullets=[],giants=[],particles=[];
+let running=false,frame=0,cooldown=0,spawnTimer=0,spawned=0,kills=0,level=1;
+let TOTAL=40,AHP=35;
+let CM=4.5*60;
+let used={},slots=[-1,-1,-1],drag=null,ddx=0,ddy=0;
+
+function resize(){cv.width=window.innerWidth;cv.height=window.innerHeight-UI_H;}
+resize();
+window.addEventListener('resize',()=>{resize();if(running)buildPath();genStars();});
+
+function genStars(){stars=[];for(let i=0;i<130;i++)stars.push({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.6+.3,a:Math.random()*.7+.2});}
+genStars();
+
+// ─── PATH (longer + bigger) ────────────────────────────────
+function buildPath(){
+  const W=cv.width,H=cv.height;
+  const pts=[
+    {x:-50,    y:H*.11},
+    {x:W*.09,  y:H*.11},
+    {x:W*.09,  y:H*.40},
+    {x:W*.23,  y:H*.40},
+    {x:W*.23,  y:H*.12},
+    {x:W*.40,  y:H*.12},
+    {x:W*.40,  y:H*.56},
+    {x:W*.26,  y:H*.56},
+    {x:W*.26,  y:H*.80},
+    {x:W*.53,  y:H*.80},
+    {x:W*.53,  y:H*.40},
+    {x:W*.68,  y:H*.40},
+    {x:W*.68,  y:H*.74},
+    {x:W*.84,  y:H*.74},
+    {x:W*.84,  y:H*.26},
+    {x:W+50,   y:H*.26},
+  ];
+  path=[];
+  for(let i=0;i<pts.length-1;i++){
+    const a=pts[i],b=pts[i+1],d=Math.hypot(b.x-a.x,b.y-a.y),n=Math.ceil(d/3);
+    for(let s=0;s<=n;s++)path.push({x:a.x+(b.x-a.x)*s/n,y:a.y+(b.y-a.y)*s/n});
+  }
+}
+// Bigger path radius (55px)
+function onPath(x,y,r=55){for(let p of path)if(Math.hypot(x-p.x,y-p.y)<r)return true;return false;}
+
+// ─── SLOTS ─────────────────────────────────────────────────
+function pickSlots(){
+  const av=WT.map((_,i)=>i).filter(i=>used[WT[i].id]<WT[i].max);
+  const sh=[...av].sort(()=>Math.random()-.5);
+  return [0,1,2].map(i=>sh.length>0?sh[i%sh.length]:-1);
+}
+
+// ─── GAME FLOW ─────────────────────────────────────────────
+function startGame(lvl){
+  document.getElementById('overlay').style.display='none';
+  level=lvl||1;
+  TOTAL=40+Math.floor((level-1)*8);
+  AHP=level===1?35:level===2?45:45+Math.floor((level-2)*12);
+  CM=settings.coolSec*60;
+  aliens=[];towers=[];bullets=[];giants=[];particles=[];
+  running=true;frame=0;cooldown=0;spawnTimer=0;spawned=0;kills=0;
+  used={};WT.forEach(w=>used[w.id]=0);
+  slots=pickSlots();buildPath();genStars();renderBar();
+  document.getElementById('lvlBadge').textContent='שלב '+level;
+  startMusic();
+  requestAnimationFrame(tick);
+}
+
+function renderBar(){
+  const ui=document.getElementById('ui');
+  ui.innerHTML='<div style="color:#aabbff;font-size:11px;min-width:50px;text-align:center">🔫<br>נשקים</div>';
+  slots.forEach((wi,si)=>{
+    const div=document.createElement('div');
+    if(wi<0||wi>=WT.length){div.className='slot empty';div.innerHTML='<span style="font-size:22px">🔒</span><span class="nm">ריק</span>';ui.appendChild(div);return;}
+    const w=WT[wi],rem=w.max-used[w.id];
+    div.className='slot'+(rem<=0?' empty':'');
+    div.innerHTML=`<span class="ic">${w.icon}</span><span class="nm">${w.name}</span><span class="ct">×${rem}</span>`;
+    div.dataset.si=si;div.dataset.wi=wi;
+    if(rem>0){
+      div.addEventListener('mousedown',e=>{if(cooldown>0)return;sDrag(+e.currentTarget.dataset.wi,+e.currentTarget.dataset.si,e.clientX,e.clientY);e.preventDefault();});
+      div.addEventListener('touchstart',e=>{if(cooldown>0)return;const t=e.touches[0];sDrag(+e.currentTarget.dataset.wi,+e.currentTarget.dataset.si,t.clientX,t.clientY);e.preventDefault();},{passive:false});
+    }
+    ui.appendChild(div);
+  });
+  const sb=document.createElement('button');
+  sb.textContent='⚙️';sb.title='הגדרות';
+  sb.style.cssText='background:none;border:2px solid #445566;color:#aabbff;font-size:22px;width:50px;height:50px;border-radius:10px;cursor:pointer;flex-shrink:0;';
+  sb.onclick=()=>openSettings();
+  ui.appendChild(sb);
+}
+
+// ─── DRAG ──────────────────────────────────────────────────
+function sDrag(wi,si,x,y){drag={wi,si};ddx=x;ddy=y;const d=document.getElementById('dp');d.textContent=WT[wi].icon;d.style.display='block';d.style.left=x+'px';d.style.top=y+'px';}
+document.addEventListener('mousemove',e=>{if(!drag)return;ddx=e.clientX;ddy=e.clientY;mpv();});
+document.addEventListener('touchmove',e=>{if(!drag)return;const t=e.touches[0];ddx=t.clientX;ddy=t.clientY;mpv();e.preventDefault();},{passive:false});
+function mpv(){const d=document.getElementById('dp');d.style.left=ddx+'px';d.style.top=ddy+'px';}
+document.addEventListener('mouseup',e=>{if(drag)doDrop(e.clientX,e.clientY);});
+document.addEventListener('touchend',e=>{if(drag){const t=e.changedTouches[0];doDrop(t.clientX,t.clientY);}});
+function doDrop(x,y){
+  document.getElementById('dp').style.display='none';
+  if(!drag)return;
+  const r=cv.getBoundingClientRect(),cx=x-r.left,cy=y-r.top;
+  if(cy>=0&&cy<=cv.height&&cx>=0&&cx<=cv.width&&!onPath(cx,cy))placeW(WT[drag.wi],cx,cy,drag.si);
+  drag=null;
+}
+function placeW(w,x,y,si){
+  used[w.id]++;playSound('place');
+  if(w.giant)giants.push({w,pi:0,x:path[0].x,y:path[0].y,spd:1.1,done:false});
+  else towers.push({w,x,y,shots:0,ft:0,hp:9,alive:true});
+  cooldown=CM;
+  const av=WT.map((_,i)=>i).filter(i=>used[WT[i].id]<WT[i].max&&!slots.includes(i));
+  if(av.length>0)slots[si]=av[Math.floor(Math.random()*av.length)];
+  else{const any=WT.map((_,i)=>i).filter(i=>used[WT[i].id]<WT[i].max);slots[si]=any.length>0?any[Math.floor(Math.random()*any.length)]:-1;}
+  renderBar();
+}
+
+// ─── SPAWN ─────────────────────────────────────────────────
+function spawnAlien(){
+  const spd=0.28+Math.random()*.1+(level-1)*.06;
+  aliens.push({x:path[0].x,y:path[0].y,pi:0,hp:AHP,mhp:AHP,spd,alive:true,reached:false});
+  spawned++;
+}
+function spark(x,y,c){for(let i=0;i<6;i++)particles.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5-2,life:26,c});}
+
+// ─── UPDATE ────────────────────────────────────────────────
+function update(){
+  if(cooldown>0){
+    cooldown--;
+    const cw=document.getElementById('coolWrap');cw.style.display='block';
+    document.getElementById('coolFill').style.width=((1-cooldown/CM)*100)+'%';
+    if(cooldown===0)cw.style.display='none';
+  }
+  if(spawned<TOTAL){spawnTimer++;if(spawnTimer>78){spawnTimer=0;spawnAlien();}}
+  for(let a of aliens){
+    if(!a.alive)continue;a.pi+=a.spd;
+    if(a.pi>=path.length-1){a.reached=true;a.alive=false;}
+    else{const pi=Math.floor(a.pi);a.x=path[pi].x;a.y=path[pi].y;}
+  }
+  for(let g of giants){
+    if(g.done)continue;g.pi+=g.spd;
+    if(g.pi>=path.length-1){g.done=true;continue;}
+    const pi=Math.floor(g.pi);g.x=path[pi].x;g.y=path[pi].y;
+    if(frame%22===0)for(let a of aliens){if(!a.alive)continue;if(Math.hypot(a.x-g.x,a.y-g.y)<64){a.hp-=g.w.dmg;spark(a.x,a.y,'#ff44ff');if(a.hp<=0){a.alive=false;kills++;spark(a.x,a.y,'#fff');}}}
+  }
+  for(let t of towers){
+    if(!t.alive)continue;if(t.shots>=t.w.shots){t.alive=false;continue;}
+    t.ft++;if(t.ft<t.w.fr)continue;t.ft=0;
+    let near=null,nd=Infinity;
+    for(let a of aliens){if(!a.alive)continue;const d=Math.hypot(a.x-t.x,a.y-t.y);if(d<t.w.range&&d<nd){nd=d;near=a;}}
+    if(near){
+      if(t.w.melee){near.hp-=t.w.dmg;t.shots++;spark(near.x,near.y,t.w.color);if(near.hp<=0){near.alive=false;kills++;spark(near.x,near.y,'#fff');playSound('die');}}
+      else{bullets.push({x:t.x,y:t.y,tx:near.x,ty:near.y,tgt:near,spd:8,dmg:t.w.dmg,color:t.w.color,type:t.w.id,done:false});t.shots++;}
+    }
+    if(frame%50===0)for(let a of aliens){if(!a.alive)continue;if(Math.hypot(a.x-t.x,a.y-t.y)<48){t.hp--;if(t.hp<=0){t.alive=false;spark(t.x,t.y,'#f00');}}}
+  }
+  for(let b of bullets){
+    if(b.done)continue;const bx=b.tx-b.x,by=b.ty-b.y,bd=Math.hypot(bx,by);
+    if(bd<b.spd+7){if(b.tgt.alive){b.tgt.hp-=b.dmg;spark(b.tgt.x,b.tgt.y,b.color);if(b.tgt.hp<=0){b.tgt.alive=false;kills++;spark(b.tgt.x,b.tgt.y,'#fff');playSound('die');}}b.done=true;}
+    else{b.x+=bx/bd*b.spd;b.y+=by/bd*b.spd;}
+  }
+  bullets=bullets.filter(b=>!b.done);
+  for(let p of particles){p.life--;p.x+=p.vx;p.y+=p.vy;p.vy+=.09;}
+  particles=particles.filter(p=>p.life>0);
+
+  if(aliens.some(a=>a.reached)){endGame(false);return;}
+  if(spawned>=TOTAL&&aliens.filter(a=>a.alive).length===0&&kills>=TOTAL){levelUp();return;}
+
+  document.getElementById('statsBox').innerHTML=
+    `👽 הושמדו: <b>${kills}/${TOTAL}</b> &nbsp;|&nbsp; 🏃 בדרך: <b>${aliens.filter(a=>a.alive).length}</b> &nbsp;|&nbsp; 🔫 מגדלים: <b>${towers.filter(t=>t.alive).length}</b>`;
+}
+
+// ─── DRAW ──────────────────────────────────────────────────
+function drawBg(){
+  const W=cv.width,H=cv.height;
+  const bg=BGS.find(b=>b.id===settings.bgId)||BGS[0];
+  bg.draw(W,H);
+  if(['space','ice','lava'].includes(settings.bgId)){
+    ctx.save();
+    for(let s of stars){ctx.globalAlpha=s.a*(0.55+0.45*Math.sin(frame*.018+s.x));ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+  }
+  const bgObj=BGS.find(b=>b.id===settings.bgId)||BGS[0];
+  ctx.strokeStyle=bgObj.grid;ctx.lineWidth=1;
+  const W2=cv.width,H2=cv.height;
+  for(let x=0;x<W2;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H2);ctx.stroke();}
+  for(let y=0;y<H2;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W2,y);ctx.stroke();}
+}
+
+function draw(){
+  drawBg();
+  const W=cv.width,H=cv.height;
+  if(path.length>1){
+    ctx.lineCap='round';ctx.lineJoin='round';
+    // Shadow
+    ctx.strokeStyle='rgba(0,0,0,.55)';ctx.lineWidth=84;
+    ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(let p of path)ctx.lineTo(p.x,p.y);ctx.stroke();
+    // Layers
+    [[80,'#182237'],[70,'#1e2e4a'],[60,'#243858'],[50,'#2c4468']].forEach(([lw,lc])=>{
+      ctx.strokeStyle=lc;ctx.lineWidth=lw;
+      ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(let p of path)ctx.lineTo(p.x,p.y);ctx.stroke();
+    });
+    // Edge glow
+    ctx.strokeStyle='rgba(70,120,210,.15)';ctx.lineWidth=54;
+    ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(let p of path)ctx.lineTo(p.x,p.y);ctx.stroke();
+  }
+  if(path.length>14){
+    ctx.font='bold 13px Arial';ctx.textAlign='center';
+    ctx.shadowBlur=10;
+    ctx.fillStyle='#44ff88';ctx.shadowColor='#44ff88';ctx.fillText('▶ כניסה',path[10].x,path[10].y-58);
+    ctx.fillStyle='#ff5555';ctx.shadowColor='#ff5555';ctx.fillText('⛔ יציאה',path[path.length-10].x,path[path.length-10].y-58);
+    ctx.shadowBlur=0;
+  }
+  // Towers
+  for(let t of towers){
+    if(!t.alive)continue;
+    ctx.strokeStyle=t.w.color+'22';ctx.lineWidth=1;ctx.beginPath();ctx.arc(t.x,t.y,t.w.range,0,Math.PI*2);ctx.stroke();
+    ctx.font='26px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowBlur=7;ctx.shadowColor=t.w.color;ctx.fillText(t.w.icon,t.x,t.y);ctx.shadowBlur=0;
+    const bw=32;ctx.fillStyle='#1a1a1a';ctx.fillRect(t.x-bw/2,t.y+15,bw,5);
+    ctx.fillStyle=t.hp>5?'#44ff44':'#ff8800';ctx.fillRect(t.x-bw/2,t.y+15,bw*(t.hp/9),5);
+    ctx.font='8px Arial';ctx.fillStyle='#aabbff';ctx.fillText(`${t.w.shots-t.shots}/${t.w.shots}`,t.x,t.y+28);
+  }
+  // Giants
+  for(let g of giants){
+    if(g.done)continue;
+    ctx.font='44px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowBlur=16;ctx.shadowColor='#ff44ff';ctx.fillText('👾',g.x,g.y);ctx.shadowBlur=0;
+    ctx.font='bold 9px Arial';ctx.fillStyle='#ff88ff';ctx.fillText('⚡GIANT',g.x,g.y+30);
+  }
+  // Bullets
+  for(let b of bullets){
+    ctx.save();
+    if(b.type==='laser'){ctx.shadowBlur=18;ctx.shadowColor='#00ffff';ctx.fillStyle='#00ffff';ctx.beginPath();ctx.arc(b.x,b.y,6,0,Math.PI*2);ctx.fill();}
+    else if(b.type==='missile'){ctx.font='15px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🚀',b.x,b.y);}
+    else if(b.type==='cannon'){ctx.shadowBlur=12;ctx.shadowColor='#ff6600';ctx.fillStyle='#ffaa00';ctx.beginPath();ctx.arc(b.x,b.y,5,0,Math.PI*2);ctx.fill();}
+    else{ctx.shadowBlur=7;ctx.shadowColor=b.color;ctx.fillStyle=b.color;ctx.beginPath();ctx.arc(b.x,b.y,4,0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+  }
+  // Aliens — bigger (30px)
+  for(let a of aliens){
+    if(!a.alive)continue;
+    ctx.font='30px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('👽',a.x,a.y);
+    const bw=32,hr=a.hp/a.mhp;
+    ctx.fillStyle='#1a1a1a';ctx.fillRect(a.x-bw/2,a.y-24,bw,5);
+    ctx.fillStyle=hr>.6?'#ff3333':hr>.3?'#ff8800':'#ffdd00';
+    ctx.fillRect(a.x-bw/2,a.y-24,bw*hr,5);
+  }
+  // Particles
+  for(let p of particles){ctx.globalAlpha=p.life/26;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();}
+  ctx.globalAlpha=1;
+}
+
+// ─── LEVEL UP ──────────────────────────────────────────────
+function levelUp(){
+  running=false;playSound('levelup');
+  const f=document.getElementById('lvlFlash');
+  f.style.display='block';f.style.animation='none';
+  setTimeout(()=>{f.style.animation='flash .7s 2';},10);
+  setTimeout(()=>{f.style.display='none';},1500);
+  const ov=document.getElementById('overlay');ov.style.display='flex';
+  const nextTotal=40+Math.floor(level*8),nextHp=level+1===2?45:level+1===1?35:45+Math.floor((level-1)*12);
+  ov.innerHTML=`
+    <h1 style="color:#ffdd44">⭐ שלב ${level} הושלם!</h1>
+    <p>כל ${TOTAL} החייזרים הושמדו!<br>שלב ${level+1}: ${nextTotal} חייזרים עם ${nextHp} חיים כל אחד</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn bg" onclick="startGame(${level+1})">▶ שלב ${level+1}</button>
+      <button class="btn bb" onclick="startGame(1)">🏠 מהתחלה</button>
+      <button class="btn bk" onclick="openSettings()">⚙️ הגדרות</button>
+    </div>`;
+}
+
+// ─── END GAME ──────────────────────────────────────────────
+function endGame(win){
+  running=false;
+  const ov=document.getElementById('overlay');ov.style.display='flex';
+  if(win){
+    ov.innerHTML=`<h1 style="color:#44ff44">🏆 ניצחת!</h1>
+      <p>השמדת את כל ${TOTAL} החייזרים!</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+        <button class="btn bg" onclick="startGame(${level+1})">▶ שלב ${level+1}</button>
+        <button class="btn bb" onclick="startGame(1)">🔄 מהתחלה</button>
+      </div>`;
+  } else {
+    ov.innerHTML=`<h1 style="color:#ff4444">💀 הפסדת!</h1>
+      <p>החייזרים הגיעו לסוף המפה!<br>הושמדו ${kills}/${TOTAL} בשלב ${level}.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+        <button class="btn br" onclick="startGame(${level})">🔄 נסה שוב</button>
+        <button class="btn bb" onclick="startGame(1)">🏠 מהתחלה</button>
+        <button class="btn bk" onclick="openSettings()">⚙️ הגדרות</button>
+      </div>`;
+  }
+}
+
+// ─── TICK ──────────────────────────────────────────────────
+function tick(){if(!running)return;frame++;update();draw();requestAnimationFrame(tick);}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')openSettings();});
+</script>
+</body>
+</html>
