@@ -49,15 +49,21 @@
     text-shadow: 0 0 20px #2ecc71, 0 4px 0 #1a8a4a;
     animation: pulse 1.5s infinite;
   }
-  .overlay-sub { font-size: 8px; color: #a8d8a8; text-align: center; line-height: 2.4; }
+  .overlay-sub { font-size: 11px; color: #a8d8a8; text-align: center; line-height: 2.4; }
   .overlay-score { font-size: 11px; color: #f1c40f; text-shadow: 0 0 12px #f1c40f; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
   #mode-select { display: flex; gap: 20px; pointer-events: all; }
   .mode-btn {
-    font-family: 'Press Start 2P', monospace; font-size: 8px;
-    padding: 10px 16px; border: 2px solid #2ecc71; background: transparent;
-    color: #2ecc71; cursor: pointer; border-radius: 4px; transition: all 0.2s;
-  }
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+  padding: 18px 30px;
+  border: 2px solid #2ecc71;
+  background: transparent;
+  color: #2ecc71;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
   .mode-btn:hover { background: #2ecc71; color: #000; }
   #controls { margin-top: 8px; font-size: 6px; color: #3a5a3a; text-align: center; line-height: 2.2; }
   #pause-menu {
