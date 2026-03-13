@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>מלחמת הגבעה</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:Arial,sans-serif; background:#1a1a2e; display:flex; justify-content:center; padding:16px; }
+#wrap { width:100%; max-width:900px; }
+canvas { width:100%; border-radius:12px; border:2px solid #444; cursor:crosshair; display:block; }
+.ui { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+.panel { background:#2a2a3e; border-radius:8px; padding:12px; color:#eee; }
+.panel h3 { font-size:14px; margin-bottom:6px; }
+.hpbg { background:#444; border-radius:4px; height:10px; overflow:hidden; }
+.hpfill { height:10px; border-radius:4px; transition:width 0.3s; }
+.hptxt { font-size:12px; color:#aaa; margin-top:4px; }
+#log { margin-top:10px; background:#2a2a3e; border-radius:8px; padding:12px; font-size:13px; color:#ccc; min-height:44px; line-height:1.6; }
+
+/* menu screen */
+#menuScreen { margin-top:10px; background:#1e2240; border-radius:12px; padding:30px; text-align:center; color:#fff; }
+#menuScreen h1 { font-size:26px; margin-bottom:8px; }
+#menuScreen p { color:#aaa; font-size:14px; margin-bottom:28px; }
+.mode-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+.mode-card { background:#2a2a3e; border:2px solid #444; border-radius:12px; padding:20px 16px; cursor:pointer; transition:border-color 0.2s,transform 0.1s; }
+.mode-card:hover { border-color:#4a90d9; transform:scale(1.03); }
+.mode-card.selected { border-color:#4a90d9; background:#1a3a5e; }
+.mode-icon { font-size:40px; margin-bottom:10px; }
+.mode-title { font-size:16px; font-weight:bold; margin-bottom:6px; }
+.mode-desc { font-size:12px; color:#aaa; line-height:1.5; }
+#startBtn { padding:14px 40px; background:#4a90d9; color:#fff; border:none; border-radius:8px; font-size:16px; cursor:pointer; }
+#startBtn:hover { background:#2471a3; }
+
+/* settings overlay */
+#settingsOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:100; align-items:center; justify-content:center; }
+#settingsOverlay.show { display:flex; }
+#settingsBox { background:#1e2240; border:2px solid #4a90d9; border-radius:16px; padding:28px 36px; min-width:300px; color:#eee; }
+#settingsBox h2 { font-size:20px; margin-bottom:20px; text-align:center; color:#fff; }
+.srow { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; font-size:14px; }
+.sbtn { padding:10px; width:100%; border-radius:8px; border:none; font-size:14px; cursor:pointer; margin-top:8px; }
+#btnRestartSettings { background:#e74c3c; color:#fff; }
+#btnRestartSettings:hover { background:#c0392b; }
+#btnCloseSettings { background:#2980b9; color:#fff; }
+#btnCloseSettings:hover { background:#2471a3; }
+#btnMenuSettings { background:#555; color:#fff; margin-top:4px; }
+#btnMenuSettings:hover { background:#444; }
+.toggle {
+  width:48px; height:26px; border-radius:13px;
+  background:#444; position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0;
+}
+.toggle.on { background:#2980b9; }
+.toggle::after {
+  content:''; position:absolute; top:3px; left:3px;
+  width:20px; height:20px; border-radius:50%; background:#fff; transition:left 0.2s;
+}
+.toggle.on::after { left:25px; }
+.lives-btns { display:flex; gap:6px; }
+.lives-btn {
+  width:32px; height:32px; border-radius:6px; border:2px solid #555;
+  background:#2a2a3e; color:#ccc; font-size:13px; cursor:pointer; font-weight:bold;
+}
+.lives-btn.active { border-color:#2980b9; background:#1a3a5e; color:#fff; }
+
+/* end box */
+#endBox { display:none; margin-top:10px; text-align:center; padding:20px; background:#2a2a3e; border-radius:10px; }
+#endBox h2 { color:#fff; font-size:22px; margin-bottom:12px; }
+#endBox button { padding:10px 20px; border-radius:6px; border:none; background:#4a90d9; color:#fff; font-size:14px; cursor:pointer; margin:4px; }
+#endBox .restart-btn { background:#e74c3c; }
+
+/* settings gear button */
+#gearBtn { position:absolute; top:8px; left:8px; background:rgba(0,0,0,0.4); border:none; color:#fff; font-size:18px; border-radius:50%; width:36px; height:36px; cursor:pointer; z-index:10; }
+#canvasWrap { position:relative; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="menuScreen">
+    <h1>🏔️ מלחמת הגבעה</h1>
+    <p>בחר מצב משחק</p>
+    <div class="mode-grid">
+      <div class="mode-card selected" id="cardArcher" onclick="selectMode('archer')">
+        <div class="mode-icon">🏹</div>
+        <div class="mode-title">חץ וקשת</div>
+        <div class="mode-desc">כוון מעל הגבעה וירה — הזווית קובעת לאן יפול החץ</div>
+      </div>
+      <div class="mode-card" id="cardTank" onclick="selectMode('tank')">
+        <div class="mode-icon">🪖</div>
+        <div class="mode-title">טנקים</div>
+        <div class="mode-desc">כוון את תותח הטנק וירה פגז מעל הגבעה</div>
+      </div>
+    </div>
+    <button id="startBtn" onclick="startGame()">התחל משחק ▶</button>
+  </div>
+
+  <div id="gameArea" style="display:none;">
+    <div id="canvasWrap">
+      <canvas id="c"></canvas>
+      <button id="gearBtn" onclick="openSettings()">⚙️</button>
+    </div>
+    <div class="ui">
+      <div class="panel">
+        <h3 id="p1label">🧑 שחקן 1</h3>
+        <div class="hpbg"><div class="hpfill" id="b1" style="width:100%;background:#2980b9;"></div></div>
+        <div class="hptxt" id="h1">100 / 100</div>
+      </div>
+      <div class="panel">
+        <h3>🤖 בוט</h3>
+        <div class="hpbg"><div class="hpfill" id="b2" style="width:100%;background:#c0392b;"></div></div>
+        <div class="hptxt" id="h2">100 / 100</div>
+      </div>
+    </div>
+    <div id="log">טוען...</div>
+    <div id="endBox">
+      <h2 id="endTxt"></h2>
+      <button onclick="restartGame()">שחק שוב 🔄</button>
+      <button class="restart-btn" onclick="goMenu()">תפריט ראשי 🏠</button>
+    </div>
+  </div>
+</div>
+
+<div id="settingsOverlay">
+  <div id="settingsBox">
+    <h2>⚙️ הגדרות</h2>
+    <div class="srow"><span>מצב:</span><span id="modeLbl" style="color:#4a90d9;font-weight:bold;"></span></div>
+    <div class="srow">
+      <label>צלילים</label>
+      <div class="toggle on" id="tgSound" onclick="toggleSetting('sound')"></div>
+    </div>
+    <div class="srow">
+      <label>מוזיקה</label>
+      <div class="toggle on" id="tgMusic" onclick="toggleSetting('music')"></div>
+    </div>
+    <div class="srow">
+      <label>מספר חיים</label>
+      <div class="lives-btns">
+        <button class="lives-btn active" id="lv1" onclick="setLives(1)">1</button>
+        <button class="lives-btn" id="lv2" onclick="setLives(2)">2</button>
+        <button class="lives-btn" id="lv3" onclick="setLives(3)">3</button>
+        <button class="lives-btn" id="lv4" onclick="setLives(4)">4</button>
+      </div>
+    </div>
+    <hr style="border-color:#444;margin:12px 0;">
+    <button class="sbtn" id="btnRestartSettings" onclick="restartFromSettings()">🔄 התחל מחדש</button>
+    <button class="sbtn" id="btnMenuSettings" onclick="menuFromSettings()">🏠 תפריט ראשי</button>
+    <button class="sbtn" id="btnCloseSettings" onclick="closeSettings()">סגור</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+// Logical game size (all game coords use these)
+const W=1400, H=1000;
+
+// Set canvas physical pixels to 2x logical, CSS keeps it responsive
+canvas.width=W;
+canvas.height=H;
+// CSS aspect ratio maintained by width:100% on the element
+canvas.style.aspectRatio = W+'/'+H;
+
+// Mouse: convert CSS coords → logical game coords
+function toGameCoords(e){
+  const r=canvas.getBoundingClientRect();
+  return {
+    x:(e.clientX-r.left)*(W/r.width),
+    y:(e.clientY-r.top)*(H/r.height)
+  };
+}
+
+const G=0.70, SPD=32, GROUND=860, HPEAK_Y=240;
+const HFOOT_L=W*0.38, HFOOT_R=W*0.62;
+const P1_MIN=W*0.04, P1_MAX=W*0.28;
+const P2_MIN=W*0.72, P2_MAX=W*0.96;
+const MOVE_SPEED=5;
+
+let settings={sound:true,music:true,lives:1};
+function toggleSetting(key){
+  settings[key]=!settings[key];
+  document.getElementById('tg'+key.charAt(0).toUpperCase()+key.slice(1)).classList.toggle('on',settings[key]);
+}
+function setLives(n){
+  settings.lives=n;
+  [1,2,3,4].forEach(i=>document.getElementById('lv'+i).classList.toggle('active',i===n));
+}
+
+const ZONES=['head','belly','legs','arms'];
+const ZN={head:'ראש',belly:'בטן',legs:'רגליים',arms:'ידיים'};
+const ZD={head:90,belly:45,legs:20,arms:15};
+const ZW=[0.15,0.45,0.25,0.15];
+
+let mode='archer';
+let p1=100,p2=100,p1max=100,p2max=100,animating=false,dead=false;
+let mx=400,my=150;
+let p1x=W*0.10,p1dir=1,p2x=W*0.90,p2dir=-1;
+let moveTimer=null;
+let currentStage=1;
+
+// knocked-down state: {who:'p1'|'p2', until: timestamp}
+let knocked=null;
+
+// Stage config: { p2hp, botAcc, p1moves, p2moves, label }
+const STAGES=[
+  {p2hp:100, botAcc:0.00, p1moves:false, p2moves:false, label:'שלב 1 — אף אחד לא זז'},
+  {p2hp:120, botAcc:0.00, p1moves:false, p2moves:true,  label:'שלב 2 — הבוט זז'},
+  {p2hp:140, botAcc:0.00, p1moves:true,  p2moves:false, label:'שלב 3 — אתה זז'},
+  {p2hp:160, botAcc:0.00, p1moves:true,  p2moves:true,  label:'שלב 4 — שניהם זזים'},
+  {p2hp:180, botAcc:0.25, p1moves:true,  p2moves:true,  label:'שלב 5 — הבוט מתחמם'},
+  {p2hp:200, botAcc:0.40, p1moves:true,  p2moves:true,  label:'שלב 6 — הבוט מדויק'},
+  {p2hp:220, botAcc:0.55, p1moves:true,  p2moves:true,  label:'שלב 7 — הבוט מסוכן'},
+  {p2hp:240, botAcc:0.70, p1moves:true,  p2moves:true,  label:'שלב 8 — הבוט מאיים'},
+  {p2hp:260, botAcc:0.82, p1moves:true,  p2moves:true,  label:'שלב 9 — הבוט קטלני'},
+  {p2hp:300, botAcc:0.95, p1moves:true,  p2moves:true,  label:'שלב 10 — אליפות!'},
+];
+
+function selectMode(m){
+  mode=m;
+  document.getElementById('cardArcher').classList.toggle('selected',m==='archer');
+  document.getElementById('cardTank').classList.toggle('selected',m==='tank');
+}
+
+function startGame(){
+  document.getElementById('menuScreen').style.display='none';
+  document.getElementById('gameArea').style.display='block';
+  document.getElementById('p1label').textContent = mode==='archer'?'🏹 שחקן 1':'🪖 שחקן 1';
+  document.getElementById('modeLbl').textContent = mode==='archer'?'חץ וקשת 🏹':'טנקים 🪖';
+  currentStage=1;
+  initGame();
+}
+
+function initGame(){
+  const st=STAGES[currentStage-1];
+  p1max=100; p2max=st.p2hp;
+  p1=p1max; p2=p2max;
+  animating=false; dead=false; knocked=null;
+  p1x=W*0.10; p1dir=1; p2x=W*0.90; p2dir=-1;
+  document.getElementById('endBox').style.display='none';
+  document.getElementById('log').textContent = st.label + (mode==='archer'
+    ? ' — כוון מעל הגבעה ולחץ לירות!'
+    : ' — כוון את התותח ולחץ לירות!');
+  updateUI(); draw([],[]);
+  if(moveTimer) clearInterval(moveTimer);
+  moveTimer=setInterval(()=>{
+    if(dead||document.getElementById('settingsOverlay').classList.contains('show')) return;
+    const st=STAGES[currentStage-1];
+    const p1k = knocked && knocked.who==='p1' && Date.now()<knocked.until;
+    const p2k = knocked && knocked.who==='p2' && Date.now()<knocked.until;
+    if(st.p1moves && !p1k){
+      p1x+=p1dir*MOVE_SPEED;
+      if(p1x>=P1_MAX){p1x=P1_MAX;p1dir=-1;}
+      if(p1x<=P1_MIN){p1x=P1_MIN;p1dir=1;}
+    }
+    if(st.p2moves && !p2k){
+      p2x+=p2dir*MOVE_SPEED;
+      if(p2x>=P2_MAX){p2x=P2_MAX;p2dir=-1;}
+      if(p2x<=P2_MIN){p2x=P2_MIN;p2dir=1;}
+    }
+    if(!animating) draw([],[]);
+  },16);
+}
+
+function goMenu(){
+  if(moveTimer){clearInterval(moveTimer);moveTimer=null;}
+  closeSettings();
+  dead=true;
+  document.getElementById('gameArea').style.display='none';
+  document.getElementById('menuScreen').style.display='block';
+}
+
+function restartGame(){ currentStage=1; initGame(); }
+function restartFromSettings(){ closeSettings(); currentStage=1; initGame(); }
+function menuFromSettings(){ goMenu(); }
+function openSettings(){ document.getElementById('settingsOverlay').classList.add('show'); }
+function closeSettings(){ document.getElementById('settingsOverlay').classList.remove('show'); }
+
+function hillY(x){
+  if(x<HFOOT_L||x>HFOOT_R) return GROUND;
+  const half=(HFOOT_R-HFOOT_L)/2,cx=(HFOOT_L+HFOOT_R)/2,d=(x-cx)/half;
+  return HPEAK_Y+(GROUND-HPEAK_Y)*d*d;
+}
+
+function simulate(sx,sy,vx,vy){
+  let x=sx,y=sy,cvy=vy;
+  for(let i=0;i<2000;i++){
+    cvy+=G;x+=vx;y+=cvy;
+    if(y>=hillY(x)) return {lx:x,ly:hillY(x)};
+    if(x<-200||x>W+200) return {lx:x,ly:y};
+  }
+  return {lx:x,ly:y};
+}
+
+function checkHit(lx,tx){ return Math.abs(lx-tx)<35; }
+
+function randZone(){
+  let r=Math.random(),cum=0;
+  for(let i=0;i<ZONES.length;i++){cum+=ZW[i];if(r<cum)return ZONES[i];}
+  return 'belly';
+}
+
+// ── Drawing ──
+function draw(arrows,splashes){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#87ceeb';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#ffe066';ctx.beginPath();ctx.arc(140,130,56,0,Math.PI*2);ctx.fill();
+  drawCloud(440,120,130);drawCloud(940,100,104);drawCloud(1180,140,88);
+
+  ctx.fillStyle='#5a7a3a';ctx.fillRect(0,GROUND,W,H-GROUND);
+  ctx.strokeStyle='#3d5e1e';ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(0,GROUND);ctx.lineTo(W,GROUND);ctx.stroke();
+
+  ctx.fillStyle='#6aaa46';
+  ctx.beginPath();ctx.moveTo(HFOOT_L,GROUND);
+  for(let x=HFOOT_L;x<=HFOOT_R;x+=2)ctx.lineTo(x,hillY(x));
+  ctx.lineTo(HFOOT_R,GROUND);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#3d7520';ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(HFOOT_L,GROUND);
+  for(let x=HFOOT_L;x<=HFOOT_R;x+=2)ctx.lineTo(x,hillY(x));
+  ctx.lineTo(HFOOT_R,GROUND);ctx.stroke();
+
+  const p1knocked = knocked && knocked.who==='p1' && Date.now()<knocked.until;
+  const p2knocked = knocked && knocked.who==='p2' && Date.now()<knocked.until;
+
+  if(mode==='archer'){
+    drawArcher(p1x,GROUND,'#2471a3',true,p1knocked);
+    drawArcher(p2x,GROUND,'#a93226',false,p2knocked);
+  } else {
+    drawTank(p1x,GROUND,'#2471a3',true,p1knocked);
+    drawTank(p2x,GROUND,'#a93226',false,p2knocked);
+  }
+
+  ctx.font='bold 24px Arial';ctx.textAlign='center';ctx.fillStyle='#fff';
+  ctx.fillText(p1+' HP',p1x,GROUND-104);
+  ctx.fillText(p2+' HP',p2x,GROUND-104);
+  if(p1knocked){ ctx.fillStyle='#f39c12'; ctx.font='22px Arial'; ctx.fillText('😵 נפל!',p1x,GROUND-130); }
+  if(p2knocked){ ctx.fillStyle='#f39c12'; ctx.font='22px Arial'; ctx.fillText('😵 נפל!',p2x,GROUND-130); }
+
+  if(!animating&&!dead&&!p1knocked){
+    const ox=p1x,oy=GROUND-44;
+    const ang=Math.atan2(my-oy,mx-ox);
+    ctx.save();ctx.setLineDash([12,10]);
+    ctx.strokeStyle='rgba(255,255,255,0.75)';ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(ox,oy);
+    ctx.lineTo(ox+Math.cos(ang)*180,oy+Math.sin(ang)*180);
+    ctx.stroke();ctx.restore();
+  }
+
+  if(arrows)arrows.forEach(a=>{if(!a.done)(mode==='archer'?drawArrow:drawShell)(a.x,a.y,a.vx,a.vy,a.col);});
+  if(splashes)splashes.forEach(s=>{if(s.a>0)drawSplash(s.x,s.y,s.hit,s.a);});
+}
+
+function drawCloud(cx,cy,r){
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  ctx.beginPath();ctx.arc(cx,cy,r*0.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+r*0.4,cy+10,r*0.38,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx-r*0.35,cy+12,r*0.33,0,Math.PI*2);ctx.fill();
+}
+
+function drawArcher(x,y,col,right,isKnocked){
+  const d=right?1:-1;
+  if(isKnocked){
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(right ? Math.PI/2 : -Math.PI/2);
+    ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(0,0,26,8,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f5cba7';ctx.beginPath();ctx.arc(0,-40,18,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=col;ctx.fillRect(-14,-24,28,38);
+    ctx.fillStyle='#333';ctx.fillRect(-14,10,28,8);
+    ctx.restore();
+    return;
+  }
+  ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(x,y+4,26,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f5cba7';ctx.beginPath();ctx.arc(x,y-66,18,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#5d3a1a';ctx.beginPath();ctx.arc(x,y-76,14,Math.PI,0);ctx.fill();
+  ctx.fillStyle=col;ctx.fillRect(x-14,y-48,28,38);
+  ctx.fillStyle='#333';ctx.fillRect(x-14,y-18,28,8);
+  ctx.fillStyle='#555';ctx.fillRect(x-12,y-10,10,26);ctx.fillRect(x+2,y-10,10,26);
+  ctx.fillStyle='#333';ctx.fillRect(x-16,y+14,14,8);ctx.fillRect(x+2,y+14,14,8);
+  ctx.strokeStyle='#5d3a1a';ctx.lineWidth=6;
+  ctx.beginPath();ctx.arc(x+d*16,y-32,26,-0.58*Math.PI,0.58*Math.PI,!right);ctx.stroke();
+  ctx.strokeStyle='#ddd';ctx.lineWidth=2;
+  const bx=x+d*16,by=y-32;
+  ctx.beginPath();ctx.moveTo(bx,by-26*Math.sin(0.58*Math.PI));ctx.lineTo(bx,by+26*Math.sin(0.58*Math.PI));ctx.stroke();
+}
+
+function drawTank(x,y,col,right,isKnocked){
+  const d=right?1:-1;
+  if(isKnocked){
+    ctx.save();
+    ctx.translate(x,y-36);
+    ctx.scale(1,-1);
+    ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(0,0,44,10,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#333';ctx.fillRect(-40,-2,80,20);
+    ctx.beginPath();ctx.arc(-32,8,10,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(32,8,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=col;ctx.fillRect(-32,-28,64,32);
+    ctx.fillStyle=col;ctx.beginPath();ctx.arc(0,-30,20,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+    return;
+  }
+  ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(x,y+6,44,10,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#333';ctx.fillRect(x-40,y-16,80,20);
+  ctx.beginPath();ctx.arc(x-32,y-6,10,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(x+32,y-6,10,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=col;ctx.fillRect(x-32,y-44,64,32);
+  ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y-48,20,0,Math.PI*2);ctx.fill();
+  const ox=x,oy=y-48;
+  const ang=Math.atan2(my-oy,mx-ox);
+  const cannonAng=right?ang:-(Math.PI*0.55);
+  ctx.save();ctx.translate(ox,oy);ctx.rotate(cannonAng);
+  ctx.fillStyle='#222';ctx.fillRect(0,-6,44,12);
+  ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.beginPath();ctx.arc(x,y-48,6,0,Math.PI*2);ctx.fill();
+}
+
+function drawArrow(x,y,vx,vy,col){
+  ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(vy,vx));
+  ctx.strokeStyle='#8B4513';ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(-24,0);ctx.lineTo(20,0);ctx.stroke();
+  ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(20,0);ctx.lineTo(6,-8);ctx.lineTo(6,8);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#bbb';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(-16,0);ctx.lineTo(-26,-10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-16,0);ctx.lineTo(-26,10);ctx.stroke();
+  ctx.restore();
+}
+
+function drawShell(x,y,vx,vy,col){
+  ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(vy,vx));
+  ctx.fillStyle=col;
+  ctx.beginPath();ctx.ellipse(0,0,20,10,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffcc00';
+  ctx.beginPath();ctx.arc(-16,0,8,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+
+function drawSplash(x,y,hit,a){
+  ctx.save();ctx.globalAlpha=a;
+  ctx.font='52px Arial';ctx.textAlign='center';
+  ctx.fillText(hit?'💥':'💨',x,y);ctx.restore();
+}
+
+// ── Fire ──
+function fire(){
+  const p1knocked = knocked && knocked.who==='p1' && Date.now()<knocked.until;
+  if(dead||animating||p1knocked) return;
+  animating=true;
+  const ox=p1x,oy=GROUND-44;
+  const ang=Math.atan2(my-oy,mx-ox);
+  const pvx=Math.cos(ang)*SPD,pvy=Math.sin(ang)*SPD;
+
+  // Bot aim: mix between perfect aim at p1x and random
+  const acc=STAGES[currentStage-1].botAcc;
+  const snap1=p1x, snap2=p2x;
+  let bvx, bvy;
+  if(Math.random()<acc){
+    // Smart: calculate angle that lands near snap1
+    // Use a fixed good angle (~65deg up-left) with small noise
+    const smartAng=-(Math.PI*0.60 + (Math.random()-0.5)*0.15);
+    bvx=-Math.cos(smartAng)*SPD; bvy=Math.sin(smartAng)*SPD;
+  } else {
+    // Random
+    const botAng=-(Math.PI*0.3+Math.random()*Math.PI*0.45);
+    bvx=-Math.cos(botAng)*SPD; bvy=Math.sin(botAng)*SPD;
+  }
+
+  const pSim=simulate(ox,oy,pvx,pvy);
+  const bSim=simulate(snap2,GROUND-44,bvx,bvy);
+  const playerHits=checkHit(pSim.lx,snap2);
+  const botHits=checkHit(bSim.lx,snap1);
+  const arrows=[
+    {x:ox,y:oy,vx:pvx,vy:pvy,col:'#2471a3',done:false},
+    {x:snap2,y:GROUND-44,vx:bvx,vy:bvy,col:'#a93226',done:false}
+  ];
+  const splashes=[];
+  function step(){
+    let allDone=true;
+    arrows.forEach(a=>{
+      if(a.done)return;allDone=false;
+      a.vy+=G;a.x+=a.vx;a.y+=a.vy;
+      if(a.y>=hillY(a.x)||a.x<-200||a.x>W+200)a.done=true;
+    });
+    draw(arrows,splashes);
+    if(allDone){
+      const pz=randZone(),bz=randZone();
+      const pd=playerHits?ZD[pz]:0,bd=botHits?ZD[bz]:0;
+      splashes.push({x:Math.min(Math.max(pSim.lx,10),W-10),y:Math.min(pSim.ly,H-10)-14,hit:playerHits,a:1});
+      splashes.push({x:Math.min(Math.max(bSim.lx,10),W-10),y:Math.min(bSim.ly,H-10)-14,hit:botHits,a:1});
+      if(playerHits)p2=Math.max(0,p2-pd);
+      if(botHits)p1=Math.max(0,p1-bd);
+
+      // Knock-down on legs hit
+      if(playerHits && pz==='legs') knocked={who:'p2',until:Date.now()+2500};
+      if(botHits && bz==='legs')    knocked={who:'p1',until:Date.now()+2500};
+      updateUI();
+      const hitWho = mode==='archer'?'החץ':'הפגז';
+      let msg='';
+      msg+=playerHits?`✅ פגעת ב${ZN[pz]} של הבוט! (-${pd})${pz==='legs'?' 😵 הבוט נפל!':''} `:`❌ ${hitWho} החטיא. `;
+      msg+=botHits?`🤖 הבוט פגע ב${ZN[bz]} שלך! (-${bd})${bz==='legs'?' 😵 נפלת!':''}.`:`🤖 ${hitWho} של הבוט החטיא.`;
+      document.getElementById('log').textContent=msg;
+      let fa=1;
+      (function fade(){
+        fa-=0.05;splashes.forEach(s=>s.a=Math.max(0,fa));
+        draw([],splashes);
+        if(fa>0){requestAnimationFrame(fade);}
+        else{
+          if(p1<=0||p2<=0)endGame();
+          else{animating=false;draw([],[]);}
+        }
+      })();
+      return;
+    }
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function updateUI(){
+  document.getElementById('b1').style.width=(p1/p1max*100)+'%';
+  document.getElementById('b2').style.width=(p2/p2max*100)+'%';
+  document.getElementById('h1').textContent=p1+' / '+p1max;
+  document.getElementById('h2').textContent=p2+' / '+p2max;
+  document.getElementById('b1').style.background=p1/p1max>0.6?'#2980b9':p1/p1max>0.3?'#f39c12':'#e74c3c';
+  document.getElementById('b2').style.background=p2/p2max>0.6?'#c0392b':p2/p2max>0.3?'#f39c12':'#888';
+}
+
+function endGame(){
+  dead=true;
+  const eb=document.getElementById('endBox');
+  const et=document.getElementById('endTxt');
+  eb.style.display='block';
+  if(p1<=0){
+    et.textContent='💀 הפסדת בשלב '+currentStage+'...';
+    eb.innerHTML='<h2 id="endTxt">💀 הפסדת בשלב '+currentStage+'...</h2>'
+      +'<button onclick="initGame()">נסה שוב 🔄</button>'
+      +'<button class="restart-btn" onclick="goMenu()">תפריט ראשי 🏠</button>';
+  } else {
+    if(currentStage<STAGES.length){
+      et.textContent='🎉 ניצחת! עובר לשלב '+(currentStage+1);
+      eb.innerHTML='<h2 id="endTxt">🎉 ניצחת שלב '+currentStage+'!</h2>'
+        +'<button onclick="nextStage()">שלב הבא ▶ (שלב '+(currentStage+1)+')</button>'
+        +'<button class="restart-btn" onclick="goMenu()">תפריט ראשי 🏠</button>';
+    } else {
+      eb.innerHTML='<h2 id="endTxt">🏆 ניצחת את כל 10 השלבים!</h2>'
+        +'<button onclick="(()=>{currentStage=1;initGame();})()">מחדש מהתחלה</button>'
+        +'<button class="restart-btn" onclick="goMenu()">תפריט ראשי 🏠</button>';
+    }
+  }
+}
+
+function nextStage(){
+  currentStage++;
+  initGame();
+}
+
+canvas.addEventListener('mousemove',e=>{
+  if(dead)return;
+  const gc=toGameCoords(e);
+  mx=gc.x; my=gc.y;
+  if(!animating)draw([],[]);
+});
+canvas.addEventListener('click',()=>{
+  if(!dead&&!document.getElementById('settingsOverlay').classList.contains('show'))fire();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    const ov=document.getElementById('settingsOverlay');
+    if(ov.classList.contains('show'))closeSettings();
+    else openSettings();
+  }
+});
+</script>
+</body>
+</html>
