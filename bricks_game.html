@@ -501,9 +501,11 @@ function getLevelConfig(lvl) {
 }
 
 let pushTimer = null;
+let nextPushTime = 0;
+let pushIntervalMs = 25000;
 
 function buildBricks() {
-  if (pushTimer) { clearInterval(pushTimer); pushTimer = null; }
+  if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
   bricks = [];
   const cfg = getLevelConfig(level);
   const {cols, rows, bw, bh, bp, box, boy, bonusChance} = cfg;
@@ -511,33 +513,55 @@ function buildBricks() {
   const allBonusIds = BONUS_DEFS.map(b=>b.id);
   // smallBrickRatio: 0% at level 1, up to 60% by level 10+
   const smallRatio = Math.min(0.60, (level-1) * 0.065);
-  // small brick is 60% of normal size
-  const bwS = Math.max(10, Math.floor(bw * 0.55));
-  const bhS = Math.max(8,  Math.floor(bh * 0.6));
-  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
-    let hardness = r < 2 ? 2 : r < Math.floor(rows*0.6) ? 4 : BRICK_TYPES.length;
-    let ti = Math.floor(Math.random() * hardness);
-    let [col,mh,pts] = BRICK_TYPES[ti];
-    let bon = Math.random() < bonusChance
-      ? allBonusIds[Math.floor(Math.random()*allBonusIds.length)]
-      : null;
-    // decide this brick's size
-    let isSmall = Math.random() < smallRatio;
-    let thisBw = isSmall ? bwS : bw;
-    let thisBh = isSmall ? bhS : bh;
-    // position: always lay on the same grid, small bricks centered in their cell
-    let cellX = box + c*(bw+bp);
-    let cellY = boy + r*(bh+bp);
-    let brickX = isSmall ? cellX + Math.floor((bw - thisBw)/2) : cellX;
-    let brickY = isSmall ? cellY + Math.floor((bh - thisBh)/2) : cellY;
-    bricks.push({
-      x: brickX, y: brickY,
-      w: thisBw, h: thisBh, col, mh, hits:0, pts, bon, alive:true
-    });
+  // Small bricks are half-width of normal (so 2 small = 1 normal, no gaps)
+  const bwS = Math.floor(bw / 2);
+  const bhS = Math.max(8, Math.floor(bh * 0.65));
+  const rowW = cols * (bw + bp) - bp; // total row width
+  for (let r=0;r<rows;r++) {
+    let rowY = boy + r*(bh+bp);
+    let curX = box;
+    // Build this row slot by slot; each slot = bw+bp wide
+    for (let c=0;c<cols;c++) {
+      let slotW = bw; // logical slot width
+      let hardness = r < 2 ? 2 : r < Math.floor(rows*0.6) ? 4 : BRICK_TYPES.length;
+      // Decide if this slot holds 2 small or 1 normal
+      let useSmall = Math.random() < smallRatio;
+      if (useSmall) {
+        // Place 2 small bricks side by side filling the slot
+        for (let half=0; half<2; half++) {
+          let ti = Math.floor(Math.random() * hardness);
+          let [col,mh,pts] = BRICK_TYPES[ti];
+          let bon = Math.random() < bonusChance
+            ? allBonusIds[Math.floor(Math.random()*allBonusIds.length)] : null;
+          bricks.push({
+            x: curX + half*bwS, y: rowY + Math.floor((bh - bhS)/2),
+            w: bwS, h: bhS, col, mh, hits:0, pts, bon, alive:true
+          });
+        }
+      } else {
+        // One normal-size brick fills the slot
+        let ti = Math.floor(Math.random() * hardness);
+        let [col,mh,pts] = BRICK_TYPES[ti];
+        let bon = Math.random() < bonusChance
+          ? allBonusIds[Math.floor(Math.random()*allBonusIds.length)] : null;
+        bricks.push({
+          x: curX, y: rowY,
+          w: bw, h: bh, col, mh, hits:0, pts, bon, alive:true
+        });
+      }
+      curX += bw + bp;
+    }
   }
-  // Start push-down timer
+  // Start push-down countdown
   const {pushInterval} = cfg;
-  pushTimer = setInterval(pushBricksDown, pushInterval);
+  pushIntervalMs = pushInterval;
+  nextPushTime = Date.now() + pushInterval;
+  if (pushTimer) { clearTimeout(pushTimer); }
+  pushTimer = setTimeout(function doPush(){
+    pushBricksDown();
+    nextPushTime = Date.now() + pushIntervalMs;
+    if (pushTimer) pushTimer = setTimeout(doPush, pushIntervalMs);
+  }, pushInterval);
 }
 
 function pushBricksDown() {
@@ -692,21 +716,26 @@ function moveBalls() {
     if(b.y+b.r>H+25) b.lost=true;
   });
 
-  // Process lost balls: each lost ball costs the owning player a life
+  // Remove lost balls — only penalize when the LAST ball for a player drops
   let lostBalls = balls.filter(b=>b.lost);
   balls = balls.filter(b=>!b.lost);
-  lostBalls.forEach(b=>{
-    let pi = b.pi;
-    lives[pi]--;
-    updateHUD();
-    playSfx('lose');
-  });
-  if(lives[0]<=0 && (nPlayers===1||lives[1]<=0)){gameOver();return;}
-  // Respawn if no balls left for a player
-  for(let pi=0;pi<(nPlayers===2?2:1);pi++){
-    if(lives[pi]>0 && balls.filter(b=>b.pi===pi).length===0){
-      spawnBall(pi,true);
+  // Group lost balls by player
+  let lostByPi = {};
+  lostBalls.forEach(b=>{ lostByPi[b.pi] = true; });
+  for (let pi in lostByPi) {
+    pi = +pi;
+    // Still alive balls for this player?
+    let remaining = balls.filter(b => b.pi === pi && !b.onPad && !b.stuck).length
+                  + balls.filter(b => b.pi === pi && (b.onPad || b.stuck)).length;
+    if (remaining === 0) {
+      // Truly last ball — costs a life
+      lives[pi]--;
+      updateHUD();
+      playSfx('lose');
+      if(lives[0]<=0 && (nPlayers===1||lives[1]<=0)){gameOver();return;}
+      if(lives[pi]>0) spawnBall(pi,true);
     }
+    // else: other balls still in play — no penalty, no respawn
   }
   updateHUD();
 }
@@ -878,7 +907,7 @@ function checkLevel(){
   if(levelTransition) return;
   if(bricks.every(b=>!b.alive)){
     levelTransition = true;
-    if(pushTimer){clearInterval(pushTimer);pushTimer=null;}
+    if(pushTimer){clearTimeout(pushTimer);pushTimer=null;}
     playSfx('level');
     level++; updateHUD(); clearBonUI();
     setTimeout(()=>{ initLevel(); showMsg('שלב '+level,1500); levelTransition = false; },700);
@@ -886,7 +915,7 @@ function checkLevel(){
 }
 
 function gameOver(){
-  if(pushTimer){clearInterval(pushTimer);pushTimer=null;}
+  if(pushTimer){clearTimeout(pushTimer);pushTimer=null;}
   stopMusic();
   gameRunning=false; cancelAnimationFrame(raf);
   playSfx('lose');
@@ -902,6 +931,64 @@ function gameOver(){
   document.getElementById('go-body').innerHTML=body;
   document.getElementById('btn-resume').style.display='none';
   showOv('ov-gameover');
+}
+
+// ---- PUSH COUNTDOWN DISPLAY ----
+function drawPushCountdown(){
+  if (!gameRunning || levelTransition || nextPushTime === 0) return;
+  const remaining = Math.max(0, nextPushTime - Date.now());
+  const secs = Math.ceil(remaining / 1000);
+  const frac = remaining / pushIntervalMs; // 1 → 0
+
+  // Arc parameters — top-right corner
+  const cx = W - 28, cy = 28, radius = 18;
+
+  ctx.save();
+
+  // Background circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fill();
+
+  // Countdown arc (clockwise drain) — color shifts red as time runs out
+  const startAngle = -Math.PI/2;
+  const endAngle   = startAngle + (frac * Math.PI * 2);
+  const r = Math.round(255 * (1 - frac));
+  const g = Math.round(200 * frac);
+  const arcColor = `rgb(${r},${g},50)`;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, radius, startAngle, endAngle);
+  ctx.closePath();
+  ctx.fillStyle = arcColor + 'cc';
+  ctx.shadowColor = arcColor;
+  ctx.shadowBlur = 8;
+  ctx.fill();
+
+  // Border ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.shadowBlur = 0;
+  ctx.stroke();
+
+  // Number
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${secs >= 10 ? 11 : 13}px Orbitron, monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowBlur = 0;
+  ctx.fillText(secs, cx, cy);
+
+  // Label below
+  ctx.font = '7px Rubik, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fillText('שורה', cx, cy + radius + 8);
+
+  ctx.restore();
 }
 
 // ---- LOOP ----
@@ -921,6 +1008,7 @@ function loop(){
   drawPads();
   drawBalls();
   drawParts();
+  drawPushCountdown();
 }
 </script>
 </body>
