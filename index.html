@@ -1,221 +1,31 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>המשחקים של ליעד</title>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- TODO: Set the document title to the name of your application -->
+    <title>Liad Cohen</title>
+    <meta name="description" content="Liad cohen Playground">
+    <meta name="author" content="Lovable" />
 
-  <style>
-    :root {
-      --bg-main: #c6d521ab;
-      --bg-card: #888dad;
-      --accent: #ffcc00;
-      --text-main: #ffffff;
-      --text-muted: #c7c9ff;
-    }
+    <!-- TODO: Update og:title to match your application name -->
+    
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9479ce59-972d-4d25-b762-23fd245955de/id-preview-9cc18318--996a921e-6c38-4196-8065-af0bb2096839.lovable.app-1774541810685.png">
 
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: radial-gradient(circle at top, #1727b7, var(--bg-main));
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      text-align: right;
-    }
-
-    header {
-      padding: 60px 20px 30px;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 2.8em;
-    }
-
-    main {
-      width: 100%;
-      display: flex;
-      justify-content: right;
-      padding: 20px;
-    }
-
-    .games-grid {
-      width: 100%;
-      max-width: 1000px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 30px;
-    }
-
-    .game-card {
-      background: linear-gradient(160deg, #232866, var(--bg-card));
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.45);
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-    }
-
-    .game-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 25px 55px rgba(69, 165, 70, 0.6);
-    }
-
-    .game-icon {
-      font-size: 3em;
-      margin-bottom: 10px;
-    }
-
-    .game-card h2 {
-      margin: 0;
-      font-size: 1.7em;
-    }
-
-    .game-card p {
-      margin-top: 14px;
-      color: var(--text-muted);
-      line-height: 1.6;
-      flex-grow: 1;
-    }
-
-    .play-btn {
-      margin-top: 24px;
-      text-align: center;
-    }
-
-    .play-btn a {
-      display: inline-block;
-      padding: 14px 34px;
-      background: var(--accent);
-      color: #1013d9;
-      font-weight: bold;
-      font-size: 1.05em;
-      text-decoration: none;
-      border-radius: 999px;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
-    }
-
-    .play-btn a:hover {
-      transform: scale(1.08);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-    }
-
-    footer {
-      margin-top: auto;
-      text-align: center;
-      padding: 25px 10px;
-      font-size: 0.9em;
-      color: #9a9ccc;
-    }
-  </style>
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9479ce59-972d-4d25-b762-23fd245955de/id-preview-9cc18318--996a921e-6c38-4196-8065-af0bb2096839.lovable.app-1774541810685.png">
+    <meta property="og:title" content="Liad Cohen">
+  <meta name="twitter:title" content="Liad Cohen">
+  <meta property="og:description" content="Liad cohen Playground">
+  <meta name="twitter:description" content="Liad cohen Playground">
+  <script type="module" crossorigin src="/assets/index-r0E8dCll.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CWx-GOip.css">
 </head>
 
-<body>
-
-  <header>
-    <h1>ספריית המשחקים של ליעד</h1>
-  </header>
-
-  <main>
-    <section class="games-grid">
-
-      <!-- משחק ראשון -->
-      <div class="game-card">
-        <div class="game-icon">🦘</div>
-        <h2>קפצן</h2>
-        <p>
-          משחק קפיצות מהיר וממכר.
-          הימנע ממכשולים, בדוק את הרפלקסים שלך
-          ונסה לשבור את השיא האישי!
-        </p>
-
-        <div class="play-btn">
-          <a href="jumper_game.html">שחק עכשיו</a>
-        </div>
-      </div>
-
-      <!-- משחק שני -->
-      <div class="game-card">
-        <div class="game-icon">👾</div>
-        <h2>להשמיד את החייזרים</h2>
-        <p>
-          הגן על הבסיס שלך מפני גלי חייזרים!
-          תגובות מהירות, לחץ מתגבר ואתגר רציני.
-        </p>
-
-        <div class="play-btn">
-          <a href="alien-defense.html">שחק עכשיו</a>
-        </div>
-      </div>
-
-      <!-- משחק שלישי -->
-      <div class="game-card">
-        <div class="game-icon">🏹</div>
-        <h2>מלחמת הגבעה</h2>
-        <p>
-         השמד את היריב במשחק יריות אסטרטגי ומרתק
-        </p>
-
-        <div class="play-btn">
-          <a href="war_game.html">שחק עכשיו</a>
-        </div>
-      </div>
-
-      <!-- משחק רביעי -->
-      <div class="game-card">
-        <div class="game-icon">🌿</div>
-        <h2>לנצח את היער </h2>
-        <p>
-        חצה בבטחה את היער ע"י מעבר מכשולים והריגת אוייבים 
-        </p>
-
-        <div class="play-btn">
-          <a href="forest-platformer.html">שחק עכשיו</a>
-        </div>
-      </div>
-
-      <!-- משחק חמישי -->
-      <div class="game-card">
-        <div class="game-icon">🔨</div>
-        <h2>  שבור אל הלבנים </h2>
-        <p> 
-          עבור שלבים תוך כדי שבירת כל הלבנים במסך. היזהר מלבנים מיוחדים
-        </p>
-
-        <div class="play-btn">
-          <a href="bricks_game.html">שחק עכשיו</a>
-        </div>
-      </div>
-
-      <!-- משחק שישי -->
-      <div class="game-card">
-        <div class="game-icon">🎈</div>
-        <h2>  פוצץ את הבלונים </h2>
-        <p> 
-         נצח את היריב במשחק מחשבה.
-         האחרון שמפוצץ את הבלון - מפסיד
-        </p>
-
-        <div class="play-btn">
-          <a href="balloon_nim.html">שחק עכשיו</a>
-        </div>
-      </div>
-
-
-    </section>
-  </main>
-
-  <footer>
-    © 2026 LiadCoh • כל הזכויות שמורות
-  </footer>
-
-</body>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>
