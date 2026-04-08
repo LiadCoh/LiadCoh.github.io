@@ -146,6 +146,8 @@
         .color-green  { --theme-color: #22c55e; }
         .color-cyan   { --theme-color: #06b6d4; }
         .color-blue   { --theme-color: #3b82f6; }
+        .color-gold   { --theme-color: #eaf63b; }
+
 
         .game-card.color-orange:hover { border-color: rgba(255, 145, 77, 0.5); box-shadow: 0 0 30px rgba(255, 145, 77, 0.15); }
         .game-card.color-purple:hover { border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 30px rgba(168, 85, 247, 0.15); }
@@ -153,6 +155,7 @@
         .game-card.color-green:hover  { border-color: rgba(34, 197, 94, 0.5);  box-shadow: 0 0 30px rgba(34, 197, 94, 0.15); }
         .game-card.color-cyan:hover   { border-color: rgba(6, 182, 212, 0.5);  box-shadow: 0 0 30px rgba(6, 182, 212, 0.15); }
         .game-card.color-blue:hover   { border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 0 30px rgba(59, 130, 246, 0.15); }
+        .game-card.color-gold:hover   { border-color: rgba(232, 229, 15, 0.817); box-shadow: 0 0 30px rgba(59, 130, 246, 0.15); }
 
         .game-card .card-glow-line { background: linear-gradient(90deg, transparent, var(--theme-color), transparent); }
         .game-card .play-btn { background: var(--theme-color); }
@@ -174,7 +177,8 @@
     <header class="header">
         <div class="header-icon">🎮</div>
         <h1>ספריית המשחקים של ליעד</h1>
-        <p>ספריית משחקים מקוריים שנבנו מאפס. בחר משחק והתחל לשחק!</p>
+        <p>ספריית משחקים שנבנו מאפס בעזרת AI</p>
+        <p>בחר משחק והתחל לשחק!</p>
     </header>
 
     <main class="games-grid">
@@ -238,6 +242,15 @@
             </div>
         </a>
 
+        <a href="https://liadcoh.github.io/game.html" class="game-card color-gold" target="_blank">
+            <div class="card-glow-line"></div>
+            <div class="game-emoji">🕵️</div>
+            <h3 class="game-title">המרגל</h3>
+            <p class="game-desc">שחקו און-ליין עם חברים וגלו מי המתחזה</p>
+            <div class="play-btn">
+                שחק עכשיו <span>←</span>
+            </div>
+        </a>
     </main>
 
 </body>
