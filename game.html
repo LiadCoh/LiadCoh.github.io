@@ -156,7 +156,6 @@ html,body{background:var(--bg);color:#fff;font-family:'Rubik',sans-serif;min-hei
 .wc-hint{font-size:13px;margin-top:10px;opacity:.75;}
 .wc-tap{font-size:13px;opacity:.45;margin-top:22px;font-weight:500;}
 
-/* CHAT */
 .chat-my-card{background:var(--card2);border:2px solid var(--accent);border-radius:20px;
   padding:24px;text-align:center;margin-bottom:18px;animation:pop .4s cubic-bezier(.16,1,.3,1);}
 .chat-my-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px;}
@@ -207,6 +206,12 @@ html,body{background:var(--bg);color:#fff;font-family:'Rubik',sans-serif;min-hei
 .input-field:focus{border-color:var(--accent);}
 .input-field.big{font-size:28px;font-weight:700;letter-spacing:8px;text-align:center;}
 
+.starter-banner{background:linear-gradient(135deg,rgba(139,124,246,.2),rgba(249,196,107,.15));
+  border:2px solid var(--accent);border-radius:14px;padding:18px;text-align:center;margin-bottom:14px;}
+.starter-banner .sb-label{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:6px;letter-spacing:1px;}
+.starter-banner .sb-name{font-size:22px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
 @media(max-width:400px){
   .logo h1{font-size:34px}.mode-grid,.room-grid{grid-template-columns:1fr}
   .wc-word,.wc-impostor,.chat-my-word,.chat-my-impostor{font-size:36px}
@@ -217,16 +222,15 @@ html,body{background:var(--bg);color:#fff;font-family:'Rubik',sans-serif;min-hei
 <a class="home-btn" href="index.html">🏠 בית</a>
 <div id="app">
 
-<!-- MODE -->
 <div id="s-mode" class="screen active">
   <div class="logo"><h1>🕵️ מתחזה</h1><p>מי בינכם המרגל הסמוי?</p></div>
   <div class="mode-grid">
-    <div class="mode-card" onclick="G.startLocal()">
+    <div class="mode-card" onclick="startLocal()">
       <span class="mc-icon">📱</span>
       <div class="mc-title">שחק עכשיו</div>
       <div class="mc-desc">כולם על אותו מסך, כל אחד לוחץ על שמו</div>
     </div>
-    <div class="mode-card" onclick="show('s-room-choice')">
+    <div class="mode-card" onclick="showScreen('s-room-choice')">
       <span class="mc-icon">💬</span>
       <div class="mc-title">שחק עם צ'אט</div>
       <div class="mc-desc">כל אחד ממכשיר נפרד דרך חדר מקוון</div>
@@ -234,47 +238,43 @@ html,body{background:var(--bg);color:#fff;font-family:'Rubik',sans-serif;min-hei
   </div>
 </div>
 
-<!-- ROOM CHOICE -->
 <div id="s-room-choice" class="screen">
   <div class="logo"><h1>💬 צ'אט</h1><p>בחר אופציה</p></div>
   <div class="room-grid">
-    <div class="room-card" onclick="show('s-host-setup')">
+    <div class="room-card" onclick="showScreen('s-host-setup')">
       <span class="rc-icon">🏠</span>
       <div class="rc-title">פתח חדר</div>
       <div class="rc-desc">קבל קוד ושלוט במשחק</div>
     </div>
-    <div class="room-card" onclick="show('s-join')">
+    <div class="room-card" onclick="showScreen('s-join')">
       <span class="rc-icon">🚪</span>
       <div class="rc-title">הצטרף לחדר</div>
       <div class="rc-desc">הכנס קוד שקיבלת</div>
     </div>
   </div>
-  <button class="secondary-btn" onclick="show('s-mode')">← חזרה</button>
+  <button class="secondary-btn" onclick="showScreen('s-mode')">← חזרה</button>
 </div>
 
-<!-- HOST SETUP -->
 <div id="s-host-setup" class="screen">
   <div class="logo"><h1>🏠 פתח חדר</h1><p>הכנס את שמך</p></div>
   <input class="input-field" id="host-name" placeholder="השם שלך" maxlength="20"/>
-  <button class="primary-btn" onclick="G.createRoom()">פתח חדר ←</button>
-  <button class="secondary-btn" onclick="show('s-room-choice')">← חזרה</button>
+  <button class="primary-btn" onclick="createRoom()">פתח חדר ←</button>
+  <button class="secondary-btn" onclick="showScreen('s-room-choice')">← חזרה</button>
   <p class="error-msg" id="host-name-err">נא להכניס שם</p>
 </div>
 
-<!-- JOIN -->
 <div id="s-join" class="screen">
   <div class="logo"><h1>🚪 הצטרף</h1><p>הכנס פרטים</p></div>
   <div class="section-label">השם שלך</div>
   <input class="input-field" id="join-name" placeholder="שם שלך" maxlength="20"/>
   <div class="section-label">קוד החדר</div>
   <input class="input-field big" id="join-code" placeholder="0000" maxlength="4" type="tel"/>
-  <button class="primary-btn" onclick="G.joinRoom()">הצטרף ←</button>
-  <button class="secondary-btn" onclick="show('s-room-choice')">← חזרה</button>
+  <button class="primary-btn" onclick="joinRoom()">הצטרף ←</button>
+  <button class="secondary-btn" onclick="showScreen('s-room-choice')">← חזרה</button>
   <p class="error-msg" id="join-err">קוד שגוי — בדוק שוב</p>
   <div class="spinner" id="join-spin" style="display:none"></div>
 </div>
 
-<!-- LOBBY HOST -->
 <div id="s-lobby-host" class="screen">
   <div class="logo"><h1>🏠 חדר פתוח</h1></div>
   <div class="code-box">
@@ -287,11 +287,10 @@ html,body{background:var(--bg);color:#fff;font-family:'Rubik',sans-serif;min-hei
   <div class="status-msg" id="host-status">ממתין לשחקנים...</div>
   <div class="section-label" style="margin-top:20px">בחר קטגוריה</div>
   <div class="category-grid" id="host-cats"></div>
-  <button class="primary-btn" id="host-start-btn" onclick="G.hostStart()" disabled>התחל משחק ←</button>
-  <button class="danger-btn" onclick="G.hostLeave()">סגור חדר</button>
+  <button class="primary-btn" id="host-start-btn" onclick="hostStart()" disabled>התחל משחק ←</button>
+  <button class="danger-btn" onclick="hostLeave()">סגור חדר</button>
 </div>
 
-<!-- LOBBY GUEST -->
 <div id="s-lobby-guest" class="screen">
   <div class="logo"><h1>⏳ ממתין</h1><p>המנהל יתחיל בקרוב</p></div>
   <div class="code-box">
@@ -301,30 +300,27 @@ html,body{background:var(--bg);color:#fff;font-family:'Rubik',sans-serif;min-hei
   <div class="section-label">משתתפים בחדר</div>
   <div class="waiting-list" id="guest-players"></div>
   <div class="spinner"></div>
-  <div class="status-msg">ממתין שהמנהל יתחיל...</div>
-  <button class="danger-btn" onclick="G.guestLeave()">עזוב חדר</button>
+  <div class="status-msg">ממתין שהמנהל יתחיל את המשחק...</div>
+  <button class="danger-btn" onclick="guestLeave()">עזוב חדר</button>
 </div>
 
-<!-- LOCAL SETUP -->
 <div id="s-setup" class="screen">
   <div class="logo"><h1>🕵️ מתחזה</h1><p>הכנס שמות משתתפים</p></div>
   <div class="section-label">שמות המשתתפים</div>
   <div class="name-inputs" id="name-inputs"></div>
-  <button class="add-btn" onclick="G.addName()">＋ הוסף משתתף</button>
+  <button class="add-btn" onclick="addName()">＋ הוסף משתתף</button>
   <p class="error-msg" id="setup-err">נדרשים לפחות 3 משתתפים</p>
-  <button class="primary-btn" onclick="G.goCategory()">המשך לבחירת קטגוריה ←</button>
-  <button class="secondary-btn" onclick="show('s-mode')">← חזרה</button>
+  <button class="primary-btn" onclick="goCategory()">המשך לבחירת קטגוריה ←</button>
+  <button class="secondary-btn" onclick="showScreen('s-mode')">← חזרה</button>
 </div>
 
-<!-- LOCAL CATEGORY -->
 <div id="s-category" class="screen">
   <div class="logo"><h1>🕵️ מתחזה</h1><p>בחר קטגוריה</p></div>
   <div class="category-grid" id="local-cats"></div>
-  <button class="primary-btn" id="local-start-btn" onclick="G.localStart()" disabled>התחל משחק ←</button>
-  <button class="secondary-btn" onclick="show('s-setup')">← חזרה</button>
+  <button class="primary-btn" id="local-start-btn" onclick="localStart()" disabled>התחל משחק ←</button>
+  <button class="secondary-btn" onclick="showScreen('s-setup')">← חזרה</button>
 </div>
 
-<!-- LOCAL PLAYERS -->
 <div id="s-players" class="screen">
   <div class="game-header">
     <div class="round-badge" id="round-badge">סבב 1</div>
@@ -332,21 +328,23 @@ html,body{background:var(--bg);color:#fff;font-family:'Rubik',sans-serif;min-hei
   </div>
   <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
   <div class="players-grid" id="players-grid"></div>
-  <button class="primary-btn" id="finish-btn" onclick="G.localFinish()" style="display:none;margin-top:24px">חשוף את המתחזה 🕵️</button>
+  <button class="primary-btn" id="finish-btn" onclick="localFinish()" style="display:none;margin-top:24px">חשוף את המתחזה 🕵️</button>
 </div>
 
-<!-- LOCAL REVEAL -->
 <div id="s-reveal" class="screen">
   <div class="reveal-area" id="reveal-area"></div>
 </div>
 
-<!-- CHAT GAME -->
 <div id="s-chat-game" class="screen">
   <div class="game-header">
     <div class="round-badge" id="chat-round-badge">סבב 1</div>
     <h2>כתבו מילה בתורכם</h2>
   </div>
   <div class="chat-my-card" id="my-word-card"></div>
+  <div id="starter-banner" class="starter-banner" style="display:none">
+    <div class="sb-label">מתחיל את הסבב</div>
+    <div class="sb-name" id="starter-name"></div>
+  </div>
   <div class="turn-box">
     <div class="turn-label">התור של</div>
     <div class="turn-name" id="turn-name">—</div>
@@ -354,19 +352,18 @@ html,body{background:var(--bg);color:#fff;font-family:'Rubik',sans-serif;min-hei
   <div class="chat-log" id="chat-log"></div>
   <div class="chat-input-row" id="chat-input-row" style="display:none">
     <input class="chat-input" id="chat-input" placeholder="כתוב מילה..." maxlength="30"/>
-    <button class="chat-send-btn" id="chat-send-btn" onclick="G.sendWord()">שלח</button>
+    <button class="chat-send-btn" id="chat-send-btn" onclick="sendWord()">שלח</button>
   </div>
   <div class="status-msg" id="chat-status"></div>
-  <button class="primary-btn" id="chat-finish-btn" onclick="G.chatFinish()" style="display:none">חשוף את המתחזה 🕵️</button>
+  <button class="primary-btn" id="chat-finish-btn" onclick="chatFinish()" style="display:none">חשוף את המתחזה 🕵️</button>
 </div>
 
-<!-- END -->
 <div id="s-end" class="screen">
   <div class="logo"><h1>🕵️ מתחזה</h1></div>
   <div class="result-box" id="end-result"></div>
   <div class="word-summary" id="end-word"></div>
-  <button class="primary-btn" id="end-again-btn" onclick="G.playAgain()">סבב חדש עם אותה קבוצה ←</button>
-  <button class="secondary-btn" onclick="show('s-mode')">חזרה לתפריט</button>
+  <button class="primary-btn" id="end-again-btn" onclick="playAgain()">סבב חדש עם אותה קבוצה ←</button>
+  <button class="secondary-btn" onclick="showScreen('s-mode')">חזרה לתפריט</button>
 </div>
 
 </div>
@@ -383,88 +380,85 @@ const CATS=[
   {id:'boardgames',name:'משחקי קופסא',icon:'🎲',words:['שח-מט','מונופול','סקראבל','קטאן','דיקסיט','ריסק','כלב','שדה קרב','דאמה','קלאוס']},
 ];
 
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+// ── UTILS ─────────────────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
 function $(id){return document.getElementById(id);}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 function ini(n){return(n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()||'?';}
 function genCode(){return String(Math.floor(1000+Math.random()*9000));}
 
-const G={};
-
 // ── PEER ──────────────────────────────────────────────────────────
-let peer=null,conns={},isHost=false;
-let myName='',myPeerId='',roomCode='';
-let peers=[];
-let selHostCat=null;
+var peer=null,conns={},isHost=false;
+var myName='',myPeerId='',roomCode='';
+var peers=[];
+var selHostCat=null;
 
 function initPeer(id){
-  return new Promise((res,rej)=>{
-    if(peer){try{peer.destroy();}catch(e){}} 
+  return new Promise(function(res,rej){
+    if(peer){try{peer.destroy();}catch(e){}}
     peer=new Peer(id,{debug:0});
     peer.on('open',res);
-    peer.on('error',e=>rej(e));
-    peer.on('connection',conn=>setupConn(conn,true));
+    peer.on('error',rej);
+    peer.on('connection',function(conn){setupConn(conn);});
   });
 }
 
-function setupConn(conn,asHost){
-  conn.on('open',()=>{
+function setupConn(conn){
+  conn.on('open',function(){
     conns[conn.peer]=conn;
-    conn.on('data',d=>onMsg(conn.peer,d));
-    conn.on('close',()=>{delete conns[conn.peer];if(isHost)guestLeft(conn.peer);});
-    conn.on('error',()=>{delete conns[conn.peer];if(isHost)guestLeft(conn.peer);});
+    conn.on('data',function(d){onMsg(conn.peer,d);});
+    conn.on('close',function(){delete conns[conn.peer];if(isHost)guestLeft(conn.peer);});
+    conn.on('error',function(){delete conns[conn.peer];if(isHost)guestLeft(conn.peer);});
   });
 }
 
-function broadcast(msg){Object.values(conns).forEach(c=>{try{c.send(msg);}catch(e){}});}
+function broadcast(msg){Object.values(conns).forEach(function(c){try{c.send(msg);}catch(e){}});}
 
 function onMsg(fromId,msg){
   if(msg.type==='join'){
-    if(!peers.find(p=>p.peerId===fromId)) peers.push({peerId:fromId,name:msg.name,isHost:false});
-    conns[fromId].send({type:'roster',peers,selCat:selHostCat});
-    broadcast({type:'roster',peers,selCat:selHostCat});
+    if(!peers.find(function(p){return p.peerId===fromId;})) peers.push({peerId:fromId,name:msg.name,isHost:false});
+    conns[fromId].send({type:'roster',peers:peers,selCat:selHostCat});
+    broadcast({type:'roster',peers:peers,selCat:selHostCat});
     renderHostLobby(); checkReady();
-  }
-  else if(msg.type==='roster'){
+  } else if(msg.type==='roster'){
     peers=msg.peers;
     renderGuestLobby();
-    if(msg.selCat) highlightCat('host-cats',msg.selCat);
-  }
-  else if(msg.type==='start'){
+  } else if(msg.type==='start'){
     startChatAsGuest(msg);
-  }
-  else if(msg.type==='word'){
-    // host receives word from guest → rebroadcast
+  } else if(msg.type==='word'){
     if(isHost){
       cMessages.push(msg.entry);
       cTurnIdx=msg.nextIdx;
       broadcast({type:'word_update',entry:msg.entry,nextIdx:msg.nextIdx});
       renderChat();
     }
-  }
-  else if(msg.type==='word_update'){
+  } else if(msg.type==='word_update'){
     cMessages.push(msg.entry);
     cTurnIdx=msg.nextIdx;
     renderChat();
-  }
-  else if(msg.type==='reveal'){
+  } else if(msg.type==='starter'){
+    showStarterBanner(msg.starterName,msg.starterPeerId);
+  } else if(msg.type==='reveal'){
     showEnd(msg.impName,msg.word,msg.catName,msg.catIcon);
-  }
-  else if(msg.type==='new_round'){
-    cRound=msg.round; cMessages=[]; cTurnIdx=0;
-    show('s-lobby-guest');
+  } else if(msg.type==='new_round'){
+    cRound=msg.round; cMessages=[]; cTurnIdx=0; starterChosen=false;
+    showScreen('s-lobby-guest');
   }
 }
 
 function guestLeft(peerId){
-  peers=peers.filter(p=>p.peerId!==peerId);
-  broadcast({type:'roster',peers,selCat:selHostCat});
+  peers=peers.filter(function(p){return p.peerId!==peerId;});
+  broadcast({type:'roster',peers:peers,selCat:selHostCat});
   renderHostLobby(); checkReady();
 }
 
 // ── HOST ──────────────────────────────────────────────────────────
-G.createRoom=async function(){
-  const name=$('host-name').value.trim();
+async function createRoom(){
+  var name=$('host-name').value.trim();
   if(!name){$('host-name-err').style.display='block';return;}
   myName=name; isHost=true; roomCode=genCode();
   myPeerId='spy_'+roomCode;
@@ -476,20 +470,20 @@ G.createRoom=async function(){
   renderHostCats();
   renderHostLobby();
   checkReady();
-  show('s-lobby-host');
-};
+  showScreen('s-lobby-host');
+}
 
 function renderHostCats(){
-  const g=$('host-cats'); g.innerHTML='';
-  CATS.forEach(cat=>{
-    const el=document.createElement('div');
+  var g=$('host-cats'); g.innerHTML='';
+  CATS.forEach(function(cat){
+    var el=document.createElement('div');
     el.className='cat-pill'; el.id='hc_'+cat.id;
-    el.innerHTML=`<span class="cat-icon">${cat.icon}</span><span class="cat-name">${cat.name}</span>`;
-    el.onclick=()=>{
+    el.innerHTML='<span class="cat-icon">'+cat.icon+'</span><span class="cat-name">'+cat.name+'</span>';
+    el.onclick=function(){
       selHostCat=cat.id;
-      document.querySelectorAll('#host-cats .cat-pill').forEach(p=>p.classList.remove('selected'));
+      document.querySelectorAll('#host-cats .cat-pill').forEach(function(p){p.classList.remove('selected');});
       el.classList.add('selected');
-      broadcast({type:'roster',peers,selCat:selHostCat});
+      broadcast({type:'roster',peers:peers,selCat:selHostCat});
       checkReady();
     };
     g.appendChild(el);
@@ -497,45 +491,45 @@ function renderHostCats(){
 }
 
 function renderHostLobby(){
-  const el=$('host-players'); el.innerHTML='';
-  peers.forEach(p=>{
-    el.innerHTML+=`<div class="waiting-player"><div class="waiting-avatar">${ini(p.name)}</div>
-      <div class="waiting-name">${p.name}</div>${p.isHost?'<span class="host-badge">מנהל</span>':''}</div>`;
+  var el=$('host-players'); el.innerHTML='';
+  peers.forEach(function(p){
+    el.innerHTML+='<div class="waiting-player"><div class="waiting-avatar">'+ini(p.name)+'</div><div class="waiting-name">'+p.name+'</div>'+(p.isHost?'<span class="host-badge">מנהל</span>':'')+'</div>';
   });
-  $('host-status').textContent=peers.length<3?`ממתין... (${peers.length}/3 מינימום)`:`${peers.length} שחקנים ✓`;
+  $('host-status').textContent=peers.length<3?'ממתין... ('+peers.length+'/3 מינימום)':peers.length+' שחקנים ✓';
 }
 
 function checkReady(){$('host-start-btn').disabled=peers.length<3||!selHostCat;}
 
-G.hostStart=function(){
-  const cat=CATS.find(c=>c.id===selHostCat);
-  const word=cat.words[Math.floor(Math.random()*cat.words.length)];
-  const shuffled=shuffle([...peers]);
-  const imp=shuffled[Math.floor(Math.random()*shuffled.length)];
+function hostStart(){
+  var cat=CATS.find(function(c){return c.id===selHostCat;});
+  var word=cat.words[Math.floor(Math.random()*cat.words.length)];
+  var shuffled=shuffle([...peers]);
+  var imp=shuffled[Math.floor(Math.random()*shuffled.length)];
   cImpostorId=imp.peerId; cWord=word; cCat=cat;
-  cPlayers=shuffled; cOrder=shuffled.map(p=>p.peerId);
-  cTurnIdx=0; cMessages=[];
+  cPlayers=shuffled; cOrder=shuffled.map(function(p){return p.peerId;});
+  cTurnIdx=0; cMessages=[]; starterChosen=false;
 
-  Object.entries(conns).forEach(([pid,conn])=>{
-    const isImp=pid===cImpostorId;
+  Object.entries(conns).forEach(function(entry){
+    var pid=entry[0], conn=entry[1];
+    var isImp=pid===cImpostorId;
     conn.send({type:'start',players:cPlayers,order:cOrder,turnIdx:0,
       catName:cat.name,catIcon:cat.icon,word:isImp?null:word,
       isImpostor:isImp,impostorId:cImpostorId,round:cRound});
   });
   startChatAsHost(cat,word);
-};
+}
 
-G.hostLeave=function(){
+function hostLeave(){
   broadcast({type:'host_gone'});
   if(peer){peer.destroy();peer=null;}
   conns={}; peers=[];
-  show('s-mode');
-};
+  showScreen('s-mode');
+}
 
 // ── GUEST ──────────────────────────────────────────────────────────
-G.joinRoom=async function(){
-  const name=$('join-name').value.trim();
-  const code=$('join-code').value.trim();
+async function joinRoom(){
+  var name=$('join-name').value.trim();
+  var code=$('join-code').value.trim();
   if(!name||code.length!==4){$('join-err').style.display='block';return;}
   myName=name; roomCode=code; isHost=false;
   myPeerId='spy_g_'+Math.random().toString(36).slice(2,8);
@@ -543,243 +537,247 @@ G.joinRoom=async function(){
   $('join-err').style.display='none';
   try{
     await initPeer(myPeerId);
-    const conn=peer.connect('spy_'+code,{reliable:true});
-    conn.on('open',()=>{
-      setupConn(conn,false);
+    var conn=peer.connect('spy_'+code,{reliable:true});
+    conn.on('open',function(){
+      setupConn(conn);
       conn.send({type:'join',name:myName,peerId:myPeerId});
       $('join-spin').style.display='none';
       $('guest-code').textContent=code;
-      show('s-lobby-guest');
+      showScreen('s-lobby-guest');
     });
-    peer.on('error',()=>{
+    peer.on('error',function(){
       $('join-spin').style.display='none';
       $('join-err').style.display='block';
     });
-    setTimeout(()=>{
+    setTimeout(function(){
       if($('s-join').classList.contains('active')){
         $('join-spin').style.display='none';
         $('join-err').style.display='block';
       }
     },6000);
   }catch(e){$('join-spin').style.display='none';$('join-err').style.display='block';}
-};
+}
 
 function renderGuestLobby(){
-  const el=$('guest-players'); el.innerHTML='';
-  peers.forEach(p=>{
-    el.innerHTML+=`<div class="waiting-player"><div class="waiting-avatar">${ini(p.name)}</div>
-      <div class="waiting-name">${p.name}</div>${p.isHost?'<span class="host-badge">מנהל</span>':''}</div>`;
+  var el=$('guest-players'); el.innerHTML='';
+  peers.forEach(function(p){
+    el.innerHTML+='<div class="waiting-player"><div class="waiting-avatar">'+ini(p.name)+'</div><div class="waiting-name">'+p.name+'</div>'+(p.isHost?'<span class="host-badge">מנהל</span>':'')+'</div>';
   });
 }
 
-function highlightCat(gridId,catId){
-  document.querySelectorAll('#'+gridId+' .cat-pill').forEach(p=>p.classList.remove('selected'));
-  const el=document.getElementById('hc_'+catId);
-  if(el) el.classList.add('selected');
-}
-
-G.guestLeave=function(){if(peer){peer.destroy();peer=null;}conns={};show('s-mode');};
+function guestLeave(){if(peer){peer.destroy();peer=null;}conns={};showScreen('s-mode');}
 
 // ── CHAT GAME ─────────────────────────────────────────────────────
-let cPlayers=[],cOrder=[],cTurnIdx=0,cMessages=[];
-let cImpostorId='',cWord='',cCat=null,cRound=1;
+var cPlayers=[],cOrder=[],cTurnIdx=0,cMessages=[];
+var cImpostorId='',cWord='',cCat=null,cRound=1;
+var starterChosen=false;
 
 function startChatAsHost(cat,word){
   cCat=cat; cWord=word;
-  $('chat-round-badge').textContent=`סבב ${cRound}`;
+  $('chat-round-badge').textContent='סבב '+cRound;
+  $('starter-banner').style.display='none';
   renderMyCard(cat,word,myPeerId===cImpostorId);
-  renderChat(); show('s-chat-game');
+  renderChat(); showScreen('s-chat-game');
 }
 
 function startChatAsGuest(msg){
   cPlayers=msg.players; cOrder=msg.order; cTurnIdx=msg.turnIdx;
   cImpostorId=msg.impostorId; cRound=msg.round||1;
   cMessages=[]; cCat={name:msg.catName,icon:msg.catIcon}; cWord=msg.word;
-  $('chat-round-badge').textContent=`סבב ${cRound}`;
+  starterChosen=false;
+  $('chat-round-badge').textContent='סבב '+cRound;
+  $('starter-banner').style.display='none';
   renderMyCard(cCat,msg.word,msg.isImpostor);
-  renderChat(); show('s-chat-game');
+  renderChat(); showScreen('s-chat-game');
 }
 
 function renderMyCard(cat,word,isImp){
   $('my-word-card').innerHTML=isImp
-    ?`<div class="chat-my-label">קטגוריה: ${cat.name} ${cat.icon||''}</div>
-      <div class="chat-my-impostor">מתחזה! 🕵️</div>
-      <div class="chat-my-hint">נסה לא להיחשף 😈</div>`
-    :`<div class="chat-my-label">קטגוריה: ${cat.name} ${cat.icon||''}</div>
-      <div class="chat-my-word">${word}</div>
-      <div class="chat-my-hint">המילה הסודית שלך</div>`;
+    ?'<div class="chat-my-label">קטגוריה: '+cat.name+' '+(cat.icon||'')+'</div><div class="chat-my-impostor">מתחזה! 🕵️</div><div class="chat-my-hint">נסה לא להיחשף 😈</div>'
+    :'<div class="chat-my-label">קטגוריה: '+cat.name+' '+(cat.icon||'')+'</div><div class="chat-my-word">'+word+'</div><div class="chat-my-hint">המילה הסודית שלך</div>';
+}
+
+function showStarterBanner(starterName,starterPeerId){
+  var isMe=starterPeerId===myPeerId;
+  $('starter-name').textContent=isMe?'אתה מתחיל! 🎯':starterName+' מתחיל 🎯';
+  $('starter-banner').style.display='block';
+  $('turn-name').textContent='כולם דיברו!';
+  $('turn-name').className='turn-name';
+  $('chat-status').textContent='';
 }
 
 function renderChat(){
-  const curId=cOrder[cTurnIdx];
-  const curP=cPlayers.find(p=>p.peerId===curId);
-  const myTurn=curId===myPeerId;
-  const allDone=cTurnIdx>=cOrder.length;
+  var curId=cOrder[cTurnIdx];
+  var curP=cPlayers.find(function(p){return p.peerId===curId;});
+  var myTurn=curId===myPeerId;
+  var allDone=cTurnIdx>=cOrder.length;
 
-  const tn=$('turn-name');
-  tn.textContent=allDone?'כולם דיברו!':myTurn?'התור שלך ✍️':(curP?curP.name:'?');
-  tn.className='turn-name'+(myTurn&&!allDone?' my-turn':'');
+  var tn=$('turn-name');
+  if(!allDone){
+    tn.textContent=myTurn?'התור שלך ✍️':(curP?curP.name:'?');
+    tn.className='turn-name'+(myTurn?' my-turn':'');
+  }
 
-  const log=$('chat-log'); log.innerHTML='';
-  cMessages.forEach(m=>{
-    log.innerHTML+=`<div class="chat-msg">
-      <div class="cmsg-av">${ini(m.name)}</div>
-      <div><div class="cmsg-name">${m.name}</div><div class="cmsg-text">${m.text}</div></div>
-    </div>`;
+  var log=$('chat-log'); log.innerHTML='';
+  cMessages.forEach(function(m){
+    log.innerHTML+='<div class="chat-msg"><div class="cmsg-av">'+ini(m.name)+'</div><div><div class="cmsg-name">'+m.name+'</div><div class="cmsg-text">'+m.text+'</div></div></div>';
   });
   log.scrollTop=log.scrollHeight;
 
   $('chat-input-row').style.display=myTurn&&!allDone?'flex':'none';
-  $('chat-status').textContent=!myTurn&&!allDone?`ממתין ל-${curP?.name||'?'}...`:'';
+  $('chat-status').textContent=!myTurn&&!allDone?'ממתין ל-'+(curP?curP.name:'?')+'...':'';
   $('chat-finish-btn').style.display=isHost&&allDone?'block':'none';
+
+  // כשכולם סיימו — host בוחר מי מתחיל ומשדר לכולם
+  if(allDone&&!starterChosen&&isHost){
+    starterChosen=true;
+    var eligible=cPlayers.length<=4?cPlayers:cPlayers.filter(function(p){return p.peerId!==cImpostorId;});
+    var starter=eligible[Math.floor(Math.random()*eligible.length)];
+    broadcast({type:'starter',starterName:starter.name,starterPeerId:starter.peerId});
+    showStarterBanner(starter.name,starter.peerId);
+  }
 }
 
-G.sendWord=function(){
-  const inp=$('chat-input'),text=inp.value.trim();
+function sendWord(){
+  var inp=$('chat-input'),text=inp.value.trim();
   if(!text)return;
   inp.value='';
-  const entry={peerId:myPeerId,name:myName,text};
-  const nextIdx=cTurnIdx+1;
+  var entry={peerId:myPeerId,name:myName,text:text};
+  var nextIdx=cTurnIdx+1;
   if(isHost){
     cMessages.push(entry); cTurnIdx=nextIdx;
-    broadcast({type:'word_update',entry,nextIdx});
+    broadcast({type:'word_update',entry:entry,nextIdx:nextIdx});
     renderChat();
   } else {
-    const hConn=Object.values(conns)[0];
-    if(hConn) hConn.send({type:'word',entry,nextIdx});
+    var hConn=Object.values(conns)[0];
+    if(hConn) hConn.send({type:'word',entry:entry,nextIdx:nextIdx});
     cMessages.push(entry); cTurnIdx=nextIdx;
     renderChat();
   }
-};
-
-G.chatFinish=function(){
-  const imp=cPlayers.find(p=>p.peerId===cImpostorId);
-  const msg={type:'reveal',impName:imp?.name||'?',word:cWord,catName:cCat.name,catIcon:cCat.icon||''};
-  broadcast(msg);
-  showEnd(msg.impName,msg.word,msg.catName,msg.catIcon);
-};
-
-function showEnd(impName,word,catName,catIcon){
-  $('end-result').innerHTML=`<span class="spy-emoji">🕵️</span>
-    <div class="rl">המתחזה היה...</div><div class="rn">${impName}</div>`;
-  $('end-word').innerHTML=`<div class="wsl">המילה הסודית</div>
-    <div class="wsw">${catIcon} ${word} — ${catName}</div>`;
-  $('end-again-btn').style.display=isHost?'block':'none';
-  show('s-end');
 }
 
-G.playAgain=function(){
+function chatFinish(){
+  var imp=cPlayers.find(function(p){return p.peerId===cImpostorId;});
+  var msg={type:'reveal',impName:imp?imp.name:'?',word:cWord,catName:cCat.name,catIcon:cCat.icon||''};
+  broadcast(msg);
+  showEnd(msg.impName,msg.word,msg.catName,msg.catIcon);
+}
+
+function showEnd(impName,word,catName,catIcon){
+  $('end-result').innerHTML='<span class="spy-emoji">🕵️</span><div class="rl">המתחזה היה...</div><div class="rn">'+impName+'</div>';
+  $('end-word').innerHTML='<div class="wsl">המילה הסודית</div><div class="wsw">'+catIcon+' '+word+' — '+catName+'</div>';
+  $('end-again-btn').style.display=isHost?'block':'none';
+  showScreen('s-end');
+}
+
+function playAgain(){
   if(isHost){
     cRound++;
     broadcast({type:'new_round',round:cRound});
-    selHostCat=null; cMessages=[]; cTurnIdx=0;
-    document.querySelectorAll('#host-cats .cat-pill').forEach(p=>p.classList.remove('selected'));
-    checkReady(); show('s-lobby-host');
+    selHostCat=null; cMessages=[]; cTurnIdx=0; starterChosen=false;
+    document.querySelectorAll('#host-cats .cat-pill').forEach(function(p){p.classList.remove('selected');});
+    checkReady(); showScreen('s-lobby-host');
   } else {
-    lRound++; renderLocalCats(); show('s-category');
+    lRound++; renderLocalCats(); showScreen('s-category');
   }
-};
+}
 
 // ── LOCAL GAME ────────────────────────────────────────────────────
-let lPlayers=[],lRound=1,lSelCat=null,lImpostor=-1,lWord='',lPending=[],lCurrent=null,lStep=0;
+var lPlayers=[],lRound=1,lSelCat=null,lImpostor=-1,lWord='',lPending=[],lCurrent=null,lStep=0;
 
-G.startLocal=function(){
+function startLocal(){
   $('name-inputs').innerHTML='';
-  for(let i=0;i<3;i++) G.addName();
-  show('s-setup');
-};
+  for(var i=0;i<3;i++) addName();
+  showScreen('s-setup');
+}
 
-G.addName=function(v=''){
-  const c=$('name-inputs'),idx=c.children.length;
-  const row=document.createElement('div'); row.className='name-row';
-  row.innerHTML=`<input type="text" placeholder="שם משתתף ${idx+1}" value="${v}" maxlength="20"/>
-    <button class="remove-btn" onclick="if(document.querySelectorAll('.name-row').length>3)this.parentElement.remove()">×</button>`;
+function addName(v){
+  v=v||'';
+  var c=$('name-inputs'),idx=c.children.length;
+  var row=document.createElement('div'); row.className='name-row';
+  row.innerHTML='<input type="text" placeholder="שם משתתף '+(idx+1)+'" value="'+v+'" maxlength="20"/><button class="remove-btn" onclick="if(document.querySelectorAll(\'.name-row\').length>3)this.parentElement.remove()">×</button>';
   c.appendChild(row);
-};
+}
 
-G.goCategory=function(){
-  const names=[...document.querySelectorAll('.name-row input')].map(i=>i.value.trim()).filter(Boolean);
+function goCategory(){
+  var names=[].slice.call(document.querySelectorAll('.name-row input')).map(function(i){return i.value.trim();}).filter(Boolean);
   if(names.length<3){$('setup-err').style.display='block';return;}
-  lPlayers=names; renderLocalCats(); show('s-category');
-};
+  lPlayers=names; renderLocalCats(); showScreen('s-category');
+}
 
 function renderLocalCats(){
-  const g=$('local-cats'); g.innerHTML='';
+  var g=$('local-cats'); g.innerHTML='';
   lSelCat=null; $('local-start-btn').disabled=true;
-  CATS.forEach(cat=>{
-    const el=document.createElement('div'); el.className='cat-pill';
-    el.innerHTML=`<span class="cat-icon">${cat.icon}</span><span class="cat-name">${cat.name}</span>`;
-    el.onclick=()=>{lSelCat=cat.id;document.querySelectorAll('#local-cats .cat-pill').forEach(p=>p.classList.remove('selected'));el.classList.add('selected');$('local-start-btn').disabled=false;};
+  CATS.forEach(function(cat){
+    var el=document.createElement('div'); el.className='cat-pill';
+    el.innerHTML='<span class="cat-icon">'+cat.icon+'</span><span class="cat-name">'+cat.name+'</span>';
+    el.onclick=function(){
+      lSelCat=cat.id;
+      document.querySelectorAll('#local-cats .cat-pill').forEach(function(p){p.classList.remove('selected');});
+      el.classList.add('selected');
+      $('local-start-btn').disabled=false;
+    };
     g.appendChild(el);
   });
 }
 
-G.localStart=function(){
-  const cat=CATS.find(c=>c.id===lSelCat);
+function localStart(){
+  var cat=CATS.find(function(c){return c.id===lSelCat;});
   lWord=cat.words[Math.floor(Math.random()*cat.words.length)];
   lImpostor=Math.floor(Math.random()*lPlayers.length);
-  lPending=shuffle([...Array(lPlayers.length).keys()]);
-  $('round-badge').textContent=`סבב ${lRound}`;
+  lPending=shuffle(lPlayers.map(function(_,i){return i;}));
+  $('round-badge').textContent='סבב '+lRound;
   $('finish-btn').style.display='none';
-  renderGrid(); show('s-players');
-};
+  renderGrid(); showScreen('s-players');
+}
 
-function renderGrid(blinkIdx=-1){
-  const g=$('players-grid'); g.innerHTML='';
-  lPlayers.forEach((name,i)=>{
-    const done=!lPending.includes(i);
-    const card=document.createElement('div');
+function renderGrid(blinkIdx){
+  blinkIdx=blinkIdx==null?-1:blinkIdx;
+  var g=$('players-grid'); g.innerHTML='';
+  lPlayers.forEach(function(name,i){
+    var done=lPending.indexOf(i)===-1;
+    var card=document.createElement('div');
     card.className='player-card'+(done?' done':'')+(i===blinkIdx?' blinking':'');
-    card.innerHTML=`<div class="player-avatar">${ini(name)}</div>
-      <div class="player-name">${name}</div><div class="player-check">✓</div>`;
-    if(!done&&blinkIdx===-1) card.onclick=()=>{lCurrent=i;lStep=0;renderReveal();show('s-reveal');};
+    card.innerHTML='<div class="player-avatar">'+ini(name)+'</div><div class="player-name">'+name+'</div><div class="player-check">✓</div>';
+    if(!done&&blinkIdx===-1){
+      (function(idx){card.onclick=function(){lCurrent=idx;lStep=0;renderReveal();showScreen('s-reveal');};})(i);
+    }
     g.appendChild(card);
   });
-  const done=lPlayers.length-lPending.length;
+  var done=lPlayers.length-lPending.length;
   $('prog').style.width=((done/lPlayers.length)*100)+'%';
 }
 
 function renderReveal(){
-  const area=$('reveal-area'),name=lPlayers[lCurrent],isImp=lCurrent===lImpostor;
-  const cat=CATS.find(c=>c.id===lSelCat);
+  var area=$('reveal-area'),name=lPlayers[lCurrent],isImp=lCurrent===lImpostor;
+  var cat=CATS.find(function(c){return c.id===lSelCat;});
   if(lStep===0){
-    area.innerHTML=`<div class="tap-card" onclick="lStep=1;renderReveal()">
-      <div class="tap-icon">👆</div>
-      <div class="tap-label">לחץ לחשוף את הכרטיס של</div>
-      <div class="tap-name">${name}</div></div>`;
+    area.innerHTML='<div class="tap-card" onclick="lStep=1;renderReveal()"><div class="tap-icon">👆</div><div class="tap-label">לחץ לחשוף את הכרטיס של</div><div class="tap-name">'+name+'</div></div>';
   } else {
-    const w=isImp
-      ?`<span class="wc-icon">🕵️</span><div class="wc-cat">קטגוריה: ${cat.name}</div>
-        <div class="wc-impostor">מתחזה!</div><div class="wc-hint">נסה לא להיחשף 😈</div>`
-      :`<span class="wc-icon">${cat.icon}</span><div class="wc-cat">קטגוריה: ${cat.name}</div>
-        <div class="wc-word">${lWord}</div><div class="wc-hint">המילה הסודית שלך</div>`;
-    area.innerHTML=`<div class="word-card" onclick="doneReveal()">${w}<div class="wc-tap">לחץ לסיום</div></div>`;
+    var w=isImp
+      ?'<span class="wc-icon">🕵️</span><div class="wc-cat">קטגוריה: '+cat.name+'</div><div class="wc-impostor">מתחזה!</div><div class="wc-hint">נסה לא להיחשף 😈</div>'
+      :'<span class="wc-icon">'+cat.icon+'</span><div class="wc-cat">קטגוריה: '+cat.name+'</div><div class="wc-word">'+lWord+'</div><div class="wc-hint">המילה הסודית שלך</div>';
+    area.innerHTML='<div class="word-card" onclick="doneReveal()">'+w+'<div class="wc-tap">לחץ לסיום</div></div>';
   }
 }
 
 function doneReveal(){
-  lPending=lPending.filter(i=>i!==lCurrent); lCurrent=null;
+  lPending=lPending.filter(function(i){return i!==lCurrent;}); lCurrent=null;
   if(lPending.length===0){
-    const cands=lPlayers.map((_,i)=>i).filter(i=>i!==lImpostor);
+    var cands=lPlayers.length<=4?lPlayers.map(function(_,i){return i;}):lPlayers.map(function(_,i){return i;}).filter(function(i){return i!==lImpostor;});
     renderGrid(cands[Math.floor(Math.random()*cands.length)]);
     $('finish-btn').style.display='block';
   } else renderGrid();
-  show('s-players');
+  showScreen('s-players');
 }
 
-G.localFinish=function(){
-  const cat=CATS.find(c=>c.id===lSelCat);
-  $('end-result').innerHTML=`<span class="spy-emoji">🕵️</span>
-    <div class="rl">המתחזה היה...</div><div class="rn">${lPlayers[lImpostor]}</div>`;
-  $('end-word').innerHTML=`<div class="wsl">המילה הסודית</div>
-    <div class="wsw">${cat.icon} ${lWord} — ${cat.name}</div>`;
+function localFinish(){
+  var cat=CATS.find(function(c){return c.id===lSelCat;});
+  $('end-result').innerHTML='<span class="spy-emoji">🕵️</span><div class="rl">המתחזה היה...</div><div class="rn">'+lPlayers[lImpostor]+'</div>';
+  $('end-word').innerHTML='<div class="wsl">המילה הסודית</div><div class="wsw">'+cat.icon+' '+lWord+' — '+cat.name+'</div>';
   $('end-again-btn').style.display='block';
-  show('s-end');
-};
-
-// expose renderReveal globally for inline onclick
-window.renderReveal=renderReveal;
-window.doneReveal=doneReveal;
+  showScreen('s-end');
+}
 </script>
 </body>
 </html>
