@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>BRICKS — שבור את הכל</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rubik:wght@300;400;700&display=swap');
+  :root {
+    --bg: #0a0a0f;
+    --accent: #00f5ff;
+    --accent2: #ff3864;
+    --accent3: #f5c518;
+    --glow: 0 0 20px rgba(0,245,255,0.6);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg); color: #fff;
+    font-family: 'Rubik', sans-serif;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 100vh; overflow: hidden;
+  }
+  h1 {
+    font-family: 'Orbitron', monospace; font-size: 2rem; font-weight: 900;
+    letter-spacing: 6px; color: var(--accent); text-shadow: var(--glow); margin-bottom: 8px;
+    text-align: center;
+  }
+  #ui-bar {
+    display: flex; gap: 28px; margin-bottom: 8px;
+    font-family: 'Orbitron', monospace; font-size: 0.8rem;
+    flex-wrap: wrap; justify-content: center;
+  }
+  .stat { display:flex; flex-direction:column; align-items:center; }
+  .stat-label { color:#555; font-size:0.6rem; letter-spacing:2px; }
+  .stat-val { color:var(--accent); font-size:1rem; font-weight:700; text-shadow:var(--glow); }
+  .stat-val.p2 { color:#ff3864; text-shadow:0 0 20px rgba(255,56,100,0.6); }
+  
+  #canvas-wrap {
+    position: relative;
+    border: 1px solid rgba(0,245,255,0.2);
+    box-shadow: 0 0 40px rgba(0,245,255,0.1), inset 0 0 40px rgba(0,0,0,0.5);
+    background: #0d0d14;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    max-width: 100vw;
+    max-height: 70vh; /* מונע מהמשחק לגלוש מהמסך בטלפון */
+    touch-action: none; /* קריטי למניעת גלילה ורענון בטלפונים */
+    margin: 0 auto;
+  }
+  
+  .overlay {
+    position:absolute; inset:0; background:rgba(10,10,15,0.93);
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    z-index: 10;
+  }
+  .overlay.visible { display:flex; }
+  .overlay h2 {
+    font-family:'Orbitron',monospace; font-size:2rem; font-weight:900;
+    color:var(--accent); text-shadow:var(--glow); letter-spacing:4px; text-align: center;
+  }
+  .overlay p { color:#aaa; font-size:0.85rem; text-align:center; line-height:2; padding: 0 20px; }
+  .menu-btn {
+    background:transparent; border:2px solid var(--accent); color:var(--accent);
+    font-family:'Orbitron',monospace; font-size:1rem;
+    padding:12px 0; width:260px; text-align:center; border-radius: 8px;
+    cursor:pointer; letter-spacing:2px; text-transform:uppercase;
+    transition:all 0.18s; text-shadow:var(--glow); box-shadow:var(--glow);
+  }
+  .menu-btn:hover { background:var(--accent); color:var(--bg); box-shadow:0 0 40px rgba(0,245,255,0.8); transform: scale(1.05); }
+  .menu-btn.red { border-color:#ff3864; color:#ff3864; text-shadow:0 0 20px rgba(255,56,100,0.5); box-shadow:0 0 15px rgba(255,56,100,0.3); }
+  .menu-btn.red:hover { background:#ff3864; color:#fff; box-shadow:0 0 40px rgba(255,56,100,0.8); }
+
+  #controls-hint { margin-top:12px; font-size:0.7rem; color:#666; letter-spacing:1px; font-family:'Orbitron',monospace; text-align:center; }
+  
+  @media(max-width: 600px) {
+    h1 { font-size: 1.5rem; }
+    .menu-btn { width: 220px; font-size: 0.9rem; padding: 10px 0;}
+    canvas { max-height: 65vh; }
+  }
+</style>
+</head>
+<body>
+
+<h1>⚡ BRICKS ⚡</h1>
+<div id="ui-bar">
+  <div class="stat"><span class="stat-label">ניקוד</span><span class="stat-val" id="s1">0</span></div>
+  <div class="stat"><span class="stat-label">שלב</span><span class="stat-val" id="lv">1</span></div>
+  <div class="stat"><span class="stat-label">חיים</span><span class="stat-val" id="l1">3</span></div>
+</div>
+
+<div id="canvas-wrap">
+  <canvas id="gc"></canvas>
+  
+  <div class="overlay visible" id="ov-home">
+    <h2>BRICKS</h2>
+    <p>שבור את הלבנים, אל תפיל את הכדור!<br>מותאם במיוחד למחשב ולטלפון נייד.</p>
+    <button class="menu-btn" onclick="startGame()">▶ התחל משחק</button>
+  </div>
+
+  <div class="overlay" id="ov-gameover">
+    <h2 id="go-title" class="menu-btn red" style="border:none; box-shadow:none; padding:0;">GAME OVER</h2>
+    <p id="go-body">הגעת לשלב יפה!</p>
+    <button class="menu-btn" onclick="showOv('ov-home')">☰ תפריט ראשי</button>
+  </div>
+  
+  <div class="overlay" id="ov-levelup">
+    <h2>שלב הושלם!</h2>
+    <p>כל הכבוד, עוברים לשלב הבא!</p>
+    <button class="menu-btn" onclick="nextLevel()">▶ המשך</button>
+  </div>
+</div>
+
+<div id="controls-hint">
+  מחשב: מקשי חצים לזוז, רווח לשחרר כדור<br>
+  טלפון: החלק ימינה/שמאלה על אזור המשחק, ולחץ לשחרור הכדור
+</div>
+
+<script>
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+
+// מידות לוגיות של המשחק - אל תשנה, הגרפיקה מתאימה את עצמה אוטומטית למסך
+const W = 600, H = 600;
+
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const maxW = Math.min(window.innerWidth - 20, 600);
+  const maxH = Math.min(window.innerHeight - 180, 800);
+  
+  let cssW = maxW;
+  let cssH = Math.round(cssW * H / W);
+  if (cssH > maxH) {
+    cssH = maxH;
+    cssW = Math.round(cssH * W / H);
+  }
+  
+  canvas.width = Math.round(cssW * dpr);
+  canvas.height = Math.round(cssH * dpr);
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ---- GAME STATE ----
+let gameRunning = false;
+let score = 0, lives = 3, level = 1;
+let raf;
+
+const PAD_Y = H - 40;
+const BALL_R = 7;
+let BASE_SPD = 5;
+
+let pad = { x: W/2 - 50, w: 100, y: PAD_Y, col: '#00f5ff' };
+let balls = [];
+let bricks = [];
+let particles = [];
+let powerups = [];
+
+const BRICK_COLORS = ['#00f5ff', '#a0f0a0', '#f5c518', '#ff8c42', '#ff3864', '#c77dff'];
+
+// ---- INPUT ----
+let keys = {};
+document.addEventListener('keydown', e => { keys[e.code] = true; if(e.code==='Space') releaseBalls(); });
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+// --- תמיכה במסכי מגע (טלפונים וטאבלטים) ---
+canvas.addEventListener('touchmove', handleTouch, { passive: false });
+canvas.addEventListener('touchstart', handleTouch, { passive: false });
+canvas.addEventListener('touchend', function(e) {
+  e.preventDefault();
+  releaseBalls();
+}, { passive: false });
+
+function handleTouch(e) {
+  e.preventDefault(); // חובה: מונע מהדפדפן לגלול את הדף
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const scaleX = W / rect.width;
+  const touchX = (touch.clientX - rect.left) * scaleX;
+  
+  pad.x = touchX - (pad.w / 2); // ממרכז את המחבט תחת האצבע
+  
+  // שומר שהמחבט לא יברח מגבולות המסך
+  if (pad.x < 0) pad.x = 0;
+  else if (pad.x + pad.w > W) pad.x = W - pad.w;
+}
+
+// עכבר (למחשב - אופציונלי)
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  pad.x = (e.clientX - rect.left) * scaleX - (pad.w / 2);
+  if(pad.x < 0) pad.x = 0;
+  if(pad.x + pad.w > W) pad.x = W - pad.w;
+});
+canvas.addEventListener('mousedown', releaseBalls);
+
+function releaseBalls() {
+  balls.forEach(b => {
+    if (b.stuck) {
+      b.stuck = false;
+      b.vx = (Math.random() > 0.5 ? 1 : -1) * (BASE_SPD * 0.5);
+      b.vy = -BASE_SPD;
+    }
+  });
+}
+
+function showOv(id) {
+  document.querySelectorAll('.overlay').forEach(o => o.classList.remove('visible'));
+  if (id) document.getElementById(id).classList.add('visible');
+}
+
+function updateUI() {
+  document.getElementById('s1').textContent = score;
+  document.getElementById('lv').textContent = level;
+  document.getElementById('l1').textContent = lives;
+}
+
+function startGame() {
+  score = 0; lives = 3; level = 1; BASE_SPD = 5;
+  gameRunning = true;
+  showOv(null);
+  initLevel();
+  cancelAnimationFrame(raf);
+  loop();
+}
+
+function initLevel() {
+  pad.w = 100;
+  pad.x = W/2 - pad.w/2;
+  balls = [{ x: pad.x + pad.w/2, y: pad.y - BALL_R - 1, vx: 0, vy: 0, r: BALL_R, stuck: true }];
+  powerups = [];
+  particles = [];
+  buildBricks();
+  updateUI();
+}
+
+function nextLevel() {
+  level++;
+  BASE_SPD += 0.5; // משחק נהיה מהיר יותר
+  showOv(null);
+  initLevel();
+}
+
+function buildBricks() {
+  bricks = [];
+  let cols = Math.min(12, 6 + level);
+  let rows = Math.min(8, 3 + Math.floor(level/2));
+  let bw = (W - 40) / cols - 4;
+  let bh = 20;
+  
+  for (let r=0; r<rows; r++) {
+    for (let c=0; c<cols; c++) {
+      let hp = Math.ceil(Math.random() * Math.min(3, level));
+      let isBonus = Math.random() < 0.15;
+      bricks.push({
+        x: 20 + c*(bw+4),
+        y: 60 + r*(bh+4),
+        w: bw, h: bh,
+        hp: hp, maxHp: hp,
+        col: BRICK_COLORS[r % BRICK_COLORS.length],
+        bonus: isBonus
+      });
+    }
+  }
+}
+
+function spawnParticles(x, y, color) {
+  for(let i=0; i<8; i++) {
+    particles.push({
+      x: x, y: y,
+      vx: (Math.random()-0.5)*8,
+      vy: (Math.random()-0.5)*8,
+      life: 1,
+      col: color
+    });
+  }
+}
+
+function spawnPowerup(x, y) {
+  const types = [
+    {type: 'wide', col: '#00f5ff', char: 'W'},
+    {type: 'multi', col: '#ff3864', char: 'M'},
+    {type: 'life', col: '#a0f0a0', char: '♥'}
+  ];
+  const t = types[Math.floor(Math.random()*types.length)];
+  powerups.push({ x: x, y: y, vy: 3, w: 24, h: 24, type: t.type, col: t.col, char: t.char });
+}
+
+function update() {
+  if (!gameRunning) return;
+  
+  // תנועת מקלדת
+  if (keys['ArrowLeft'] || keys['KeyA']) pad.x -= 8;
+  if (keys['ArrowRight'] || keys['KeyD']) pad.x += 8;
+  if (pad.x < 0) pad.x = 0;
+  if (pad.x + pad.w > W) pad.x = W - pad.w;
+
+  // Powerups (הטבות)
+  for (let i=powerups.length-1; i>=0; i--) {
+    let p = powerups[i];
+    p.y += p.vy;
+    if (p.y + p.h > pad.y && p.y < pad.y + 12 && p.x + p.w > pad.x && p.x < pad.x + pad.w) {
+      if (p.type === 'wide') { pad.w = Math.min(200, pad.w + 40); }
+      if (p.type === 'life') { lives++; updateUI(); }
+      if (p.type === 'multi') {
+        let activeBalls = balls.filter(b=>!b.stuck);
+        if(activeBalls.length > 0) {
+          let cb = activeBalls[0];
+          balls.push({x:cb.x, y:cb.y, vx:cb.vx*0.8-1, vy:cb.vy, r:BALL_R, stuck:false});
+          balls.push({x:cb.x, y:cb.y, vx:cb.vx*0.8+1, vy:cb.vy, r:BALL_R, stuck:false});
+        } else {
+          balls.push({x: pad.x + pad.w/2, y: pad.y - BALL_R - 1, vx: BASE_SPD, vy: -BASE_SPD, r: BALL_R, stuck: false});
+        }
+      }
+      powerups.splice(i, 1);
+      score += 50; updateUI();
+    } else if (p.y > H) {
+      powerups.splice(i, 1);
+    }
+  }
+
+  // Particles (חלקיקים)
+  for (let i=particles.length-1; i>=0; i--) {
+    let p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  // Balls (כדורים)
+  let allLost = true;
+  for (let i=balls.length-1; i>=0; i--) {
+    let b = balls[i];
+    if (b.stuck) {
+      b.x = pad.x + pad.w/2;
+      b.y = pad.y - b.r - 1;
+      allLost = false;
+      continue;
+    }
+    
+    b.x += b.vx;
+    b.y += b.vy;
+    
+    // קירות
+    if (b.x - b.r < 0) { b.x = b.r; b.vx *= -1; }
+    if (b.x + b.r > W) { b.x = W - b.r; b.vx *= -1; }
+    if (b.y - b.r < 0) { b.y = b.r; b.vy *= -1; }
+    
+    // פסילה של כדור
+    if (b.y > H + 20) {
+      balls.splice(i, 1);
+      continue;
+    }
+    allLost = false;
+
+    // פגיעה במחבט
+    if (b.vy > 0 && b.y + b.r >= pad.y && b.y - b.r <= pad.y + 12 && b.x >= pad.x && b.x <= pad.x + pad.w) {
+      b.y = pad.y - b.r;
+      b.vy *= -1;
+      // שינוי זווית לפי מיקום הפגיעה במחבט
+      let hitPoint = (b.x - (pad.x + pad.w/2)) / (pad.w/2);
+      b.vx = hitPoint * BASE_SPD * 1.2;
+    }
+
+    // פגיעה בלבנים
+    for (let j=bricks.length-1; j>=0; j--) {
+      let br = bricks[j];
+      if (b.x + b.r > br.x && b.x - b.r < br.x + br.w && b.y + b.r > br.y && b.y - b.r < br.y + br.h) {
+        
+        let overlapLeft = (b.x + b.r) - br.x;
+        let overlapRight = (br.x + br.w) - (b.x - b.r);
+        let overlapTop = (b.y + b.r) - br.y;
+        let overlapBottom = (br.y + br.h) - (b.y - b.r);
+        
+        let min = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+        
+        if (min === overlapLeft || min === overlapRight) b.vx *= -1;
+        else b.vy *= -1;
+        
+        br.hp--;
+        spawnParticles(b.x, b.y, br.col);
+        score += 10;
+        
+        if (br.hp <= 0) {
+          if (br.bonus) spawnPowerup(br.x + br.w/2 - 12, br.y);
+          bricks.splice(j, 1);
+          score += 20;
+        }
+        updateUI();
+        break; // פוגע בלבנה אחת בכל פריים מקסימום
+      }
+    }
+  }
+
+  // הפסד חיים
+  if (allLost) {
+    lives--;
+    updateUI();
+    if (lives <= 0) {
+      gameRunning = false;
+      document.getElementById('go-body').textContent = `סיימת בשלב ${level} עם ניקוד של ${score}!`;
+      showOv('ov-gameover');
+    } else {
+      pad.w = 100;
+      balls = [{ x: pad.x + pad.w/2, y: pad.y - BALL_R - 1, vx: 0, vy: 0, r: BALL_R, stuck: true }];
+    }
+  }
+
+  // ניצחון בשלב
+  if (bricks.length === 0 && gameRunning) {
+    gameRunning = false;
+    showOv('ov-levelup');
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  
+  // Powerups
+  powerups.forEach(p => {
+    ctx.fillStyle = p.col;
+    ctx.shadowBlur = 15; ctx.shadowColor = p.col;
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = '#000'; ctx.shadowBlur = 0;
+    ctx.font = 'bold 16px Orbitron'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(p.char, p.x + p.w/2, p.y + p.h/2 + 2);
+  });
+
+  // Bricks
+  bricks.forEach(br => {
+    ctx.fillStyle = br.col;
+    ctx.globalAlpha = br.hp / br.maxHp;
+    ctx.shadowBlur = 10; ctx.shadowColor = br.col;
+    ctx.fillRect(br.x, br.y, br.w, br.h);
+    
+    if (br.bonus) {
+      ctx.fillStyle = '#fff'; ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      ctx.font = '12px Rubik'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('★', br.x + br.w/2, br.y + br.h/2 + 1);
+    }
+    ctx.globalAlpha = 1;
+  });
+
+  // Particles
+  particles.forEach(p => {
+    ctx.fillStyle = p.col;
+    ctx.globalAlpha = p.life;
+    ctx.fillRect(p.x, p.y, 4, 4);
+    ctx.globalAlpha = 1;
+  });
+
+  // Pad
+  ctx.fillStyle = pad.col;
+  ctx.shadowBlur = 20; ctx.shadowColor = pad.col;
+  ctx.beginPath();
+  ctx.roundRect(pad.x, pad.y, pad.w, 12, 6);
+  ctx.fill();
+
+  // Balls
+  balls.forEach(b => {
+    ctx.fillStyle = '#fff';
+    ctx.shadowBlur = 15; ctx.shadowColor = '#fff';
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+    ctx.fill();
+  });
+  
+  ctx.shadowBlur = 0;
+}
+
+function loop() {
+  update();
+  draw();
+  raf = requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
