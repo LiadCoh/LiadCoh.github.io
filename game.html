@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>🕵️ 2מתחזה</title>
+<title>🕵️ מתחזה</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -403,13 +403,17 @@ function initPeer(id){
   });
 }
 
+// FIX: Listen to messages unconditionally, solving the issue of missing connection events
 function setupConn(conn,asHost){
-  conn.on('open',()=>{
+  const initEvents = () => {
     conns[conn.peer]=conn;
     conn.on('data',d=>onMsg(conn.peer,d));
     conn.on('close',()=>{delete conns[conn.peer];if(isHost)guestLeft(conn.peer);});
     conn.on('error',()=>{delete conns[conn.peer];if(isHost)guestLeft(conn.peer);});
-  });
+  };
+  
+  if(conn.open) initEvents();
+  else conn.on('open', initEvents);
 }
 
 function broadcast(msg){
