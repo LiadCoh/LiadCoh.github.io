@@ -248,7 +248,7 @@ html,body{background:var(--bg);color:#fff;font-family:'Rubik',sans-serif;min-hei
       <div class="rc-desc">הכנס קוד שקיבלת</div>
     </div>
   </div>
-  <button class="secondary-btn" onclick="show('s-mode')">← חזרה</button>
+  <button class="secondary-btn" onclick="show('s-room-choice')">← חזרה</button>
 </div>
 
 <div id="s-host-setup" class="screen">
@@ -379,7 +379,7 @@ const CATS=[
   {id:'boardgames',name:'משחקי קופסא',icon:'🎲',words:['שח-מט','מונופול','סקראבל','קטאן','דיקסיט','ריסק','כלב','שדה קרב','דאמה','קלאוס']},
 ];
 
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');window.scrollTo(0,0);}
 function $(id){return document.getElementById(id);}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 function ini(n){return(n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()||'?';}
@@ -412,58 +412,64 @@ function setupConn(conn,asHost){
   });
 }
 
-function broadcast(msg){Object.values(conns).forEach(c=>{try{c.send(msg);}catch(e){}});}
+function broadcast(msg){
+  Object.values(conns).forEach(c=>{try{c.send(msg);}catch(e){}});
+}
 
 function onMsg(fromId,msg){
-  if(msg.type==='join'){
-    if(!peers.find(p=>p.peerId===fromId)) peers.push({peerId:fromId,name:msg.name,isHost:false});
-    conns[fromId].send({type:'roster',peers,selCat:selHostCat});
-    broadcast({type:'roster',peers,selCat:selHostCat});
-    renderHostLobby(); checkReady();
-  }
-  else if(msg.type==='roster'){
-    peers=msg.peers;
-    renderGuestLobby();
-    if(msg.selCat) highlightCat('host-cats',msg.selCat);
-  }
-  else if(msg.type==='start'){
-    startChatAsGuest(msg);
-  }
-  else if(msg.type==='word'){
-    if(isHost){
+  try {
+    if(msg.type==='join'){
+      if(!peers.find(p=>p.peerId===fromId)) peers.push({peerId:fromId,name:msg.name,isHost:false});
+      conns[fromId].send({type:'roster',peers,selCat:selHostCat});
+      broadcast({type:'roster',peers,selCat:selHostCat});
+      renderHostLobby(); checkReady();
+    }
+    else if(msg.type==='roster'){
+      peers=msg.peers;
+      renderGuestLobby();
+      if(msg.selCat) highlightCat('host-cats',msg.selCat);
+    }
+    else if(msg.type==='start'){
+      startChatAsGuest(msg);
+    }
+    else if(msg.type==='word'){
+      if(isHost){
+        cMessages.push(msg.entry);
+        cTurnIdx=msg.nextIdx;
+        broadcast({type:'word_update',entry:msg.entry,nextIdx:msg.nextIdx});
+        renderChat();
+      }
+    }
+    else if(msg.type==='word_update'){
       cMessages.push(msg.entry);
       cTurnIdx=msg.nextIdx;
-      broadcast({type:'word_update',entry:msg.entry,nextIdx:msg.nextIdx});
       renderChat();
     }
-  }
-  else if(msg.type==='word_update'){
-    cMessages.push(msg.entry);
-    cTurnIdx=msg.nextIdx;
-    renderChat();
-  }
-  else if(msg.type==='start_voting'){
-    cVotes={}; myVote=null;
-    renderVoting();
-    show('s-voting');
-  }
-  else if(msg.type==='submit_vote'){
-    if(isHost){
-      cVotes[msg.voterId] = msg.targetId;
-      broadcast({type:'vote_update', votes: cVotes});
+    else if(msg.type==='start_voting'){
+      cVotes={}; myVote=null;
+      renderVoting();
+      show('s-voting');
+    }
+    else if(msg.type==='submit_vote'){
+      if(isHost){
+        cVotes[msg.voterId] = msg.targetId;
+        broadcast({type:'vote_update', votes: cVotes});
+        renderVoting();
+      }
+    }
+    else if(msg.type==='vote_update'){
+      cVotes = msg.votes;
       renderVoting();
     }
-  }
-  else if(msg.type==='vote_update'){
-    cVotes = msg.votes;
-    renderVoting();
-  }
-  else if(msg.type==='reveal'){
-    showEnd(msg.impName,msg.word,msg.catName,msg.catIcon);
-  }
-  else if(msg.type==='new_round'){
-    cRound=msg.round; cMessages=[]; cTurnIdx=0;
-    show('s-lobby-guest');
+    else if(msg.type==='reveal'){
+      showEnd(msg.impName,msg.word,msg.catName,msg.catIcon);
+    }
+    else if(msg.type==='new_round'){
+      cRound=msg.round; cMessages=[]; cTurnIdx=0;
+      show('s-lobby-guest');
+    }
+  } catch(e) {
+    console.error("Error processing message:", e);
   }
 }
 
@@ -513,10 +519,12 @@ function renderHostLobby(){
     el.innerHTML+=`<div class="waiting-player"><div class="waiting-avatar">${ini(p.name)}</div>
       <div class="waiting-name">${p.name}</div>${p.isHost?'<span class="host-badge">מנהל</span>':''}</div>`;
   });
-  $('host-status').textContent=peers.length<3?`ממתין... (${peers.length}/3 מינימום)`:`${peers.length} שחקנים ✓`;
+  if($('host-status')) $('host-status').textContent=peers.length<3?`ממתין... (${peers.length}/3 מינימום)`:`${peers.length} שחקנים ✓`;
 }
 
-function checkReady(){$('host-start-btn').disabled=peers.length<3||!selHostCat;}
+function checkReady(){
+  if($('host-start-btn')) $('host-start-btn').disabled=peers.length<3||!selHostCat;
+}
 
 G.hostStart=function(){
   const cat=CATS.find(c=>c.id===selHostCat);
@@ -528,10 +536,12 @@ G.hostStart=function(){
   cTurnIdx=0; cMessages=[];
 
   Object.entries(conns).forEach(([pid,conn])=>{
-    const isImp=pid===cImpostorId;
-    conn.send({type:'start',players:cPlayers,order:cOrder,turnIdx:0,
-      catName:cat.name,catIcon:cat.icon,word:isImp?null:word,
-      isImpostor:isImp,impostorId:cImpostorId,round:cRound});
+    try {
+      const isImp=pid===cImpostorId;
+      conn.send({type:'start',players:cPlayers,order:cOrder,turnIdx:0,
+        catName:cat.name,catIcon:cat.icon,word:isImp?null:word,
+        isImpostor:isImp,impostorId:cImpostorId,round:cRound});
+    } catch(e) { console.error("Failed to send start to", pid); }
   });
   startChatAsHost(cat,word);
 };
@@ -576,7 +586,8 @@ G.joinRoom=async function(){
 };
 
 function renderGuestLobby(){
-  const el=$('guest-players'); el.innerHTML='';
+  const el=$('guest-players'); if(!el) return;
+  el.innerHTML='';
   peers.forEach(p=>{
     el.innerHTML+=`<div class="waiting-player"><div class="waiting-avatar">${ini(p.name)}</div>
       <div class="waiting-name">${p.name}</div>${p.isHost?'<span class="host-badge">מנהל</span>':''}</div>`;
@@ -598,23 +609,25 @@ let cVotes={}, myVote=null;
 
 function startChatAsHost(cat,word){
   cCat=cat; cWord=word; cVotes={}; myVote=null;
-  $('chat-round-badge').textContent=`סבב ${cRound}`;
+  if($('chat-round-badge')) $('chat-round-badge').textContent=`סבב ${cRound}`;
   renderMyCard(cat,word,myPeerId===cImpostorId);
   renderChat(); show('s-chat-game');
 }
 
 function startChatAsGuest(msg){
-  cPlayers=msg.players; cOrder=msg.order; cTurnIdx=msg.turnIdx;
+  cPlayers=msg.players||[]; cOrder=msg.order||[]; cTurnIdx=msg.turnIdx||0;
   cImpostorId=msg.impostorId; cRound=msg.round||1;
   cMessages=[]; cCat={name:msg.catName,icon:msg.catIcon}; cWord=msg.word;
   cVotes={}; myVote=null;
-  $('chat-round-badge').textContent=`סבב ${cRound}`;
+  if($('chat-round-badge')) $('chat-round-badge').textContent=`סבב ${cRound}`;
   renderMyCard(cCat,msg.word,msg.isImpostor);
   renderChat(); show('s-chat-game');
 }
 
 function renderMyCard(cat,word,isImp){
-  $('my-word-card').innerHTML=isImp
+  const el = $('my-word-card');
+  if(!el) return;
+  el.innerHTML=isImp
     ?`<div class="chat-my-label">קטגוריה: ${cat.name} ${cat.icon||''}</div>
       <div class="chat-my-impostor">מתחזה! 🕵️</div>
       <div class="chat-my-hint">נסה לא להיחשף 😈</div>`
@@ -624,37 +637,42 @@ function renderMyCard(cat,word,isImp){
 }
 
 function renderChat(){
+  if(cOrder.length===0) return;
   const curId=cOrder[cTurnIdx];
   const curP=cPlayers.find(p=>p.peerId===curId);
   const myTurn=curId===myPeerId;
 
   const tn=$('turn-name');
-  tn.textContent=myTurn?'התור שלך ✍️':(curP?curP.name:'?');
-  tn.className='turn-name'+(myTurn?' my-turn':'');
+  if(tn) {
+    tn.textContent=myTurn?'התור שלך ✍️':(curP?curP.name:'?');
+    tn.className='turn-name'+(myTurn?' my-turn':'');
+  }
 
-  const log=$('chat-log'); log.innerHTML='';
-  cMessages.forEach(m=>{
-    log.innerHTML+=`<div class="chat-msg">
-      <div class="cmsg-av">${ini(m.name)}</div>
-      <div><div class="cmsg-name">${m.name}</div><div class="cmsg-text">${m.text}</div></div>
-    </div>`;
-  });
-  log.scrollTop=log.scrollHeight;
+  const log=$('chat-log'); 
+  if(log) {
+    log.innerHTML='';
+    cMessages.forEach(m=>{
+      log.innerHTML+=`<div class="chat-msg">
+        <div class="cmsg-av">${ini(m.name)}</div>
+        <div><div class="cmsg-name">${m.name}</div><div class="cmsg-text">${m.text}</div></div>
+      </div>`;
+    });
+    log.scrollTop=log.scrollHeight;
+  }
 
-  $('chat-input-row').style.display=myTurn?'flex':'none';
-  $('chat-status').textContent=!myTurn?`ממתין ל-${curP?.name||'?'}...`:'';
+  if($('chat-input-row')) $('chat-input-row').style.display=myTurn?'flex':'none';
+  if($('chat-status')) $('chat-status').textContent=!myTurn?`ממתין ל-${curP?.name||'?'}...`:'';
   
-  // Host can start voting at any time
-  $('chat-vote-btn').style.display=isHost?'block':'none';
+  if($('chat-vote-btn')) $('chat-vote-btn').style.display=isHost?'block':'none';
 }
 
 G.sendWord=function(){
-  const inp=$('chat-input'),text=inp.value.trim();
+  const inp=$('chat-input'); if(!inp) return;
+  const text=inp.value.trim();
   if(!text)return;
   inp.value='';
   const entry={peerId:myPeerId,name:myName,text};
   
-  // Infinite wrap-around for turns
   const nextIdx=(cTurnIdx+1)%cOrder.length;
   
   if(isHost){
@@ -663,7 +681,9 @@ G.sendWord=function(){
     renderChat();
   } else {
     const hConn=Object.values(conns)[0];
-    if(hConn) hConn.send({type:'word',entry,nextIdx});
+    if(hConn) {
+       try{ hConn.send({type:'word',entry,nextIdx}); }catch(e){}
+    }
     cMessages.push(entry); cTurnIdx=nextIdx;
     renderChat();
   }
@@ -679,7 +699,7 @@ G.startVoting=function(){
 };
 
 function renderVoting(){
-  const grid=$('vote-grid');
+  const grid=$('vote-grid'); if(!grid) return;
   grid.innerHTML='';
   
   cPlayers.forEach(p=>{
@@ -698,23 +718,25 @@ function renderVoting(){
   const log=$('vote-log');
   let voteCount=0;
   
-  if(Object.keys(cVotes).length > 0) {
-    log.style.display = 'flex';
-    log.innerHTML='<div class="section-label">הצבעות חיות:</div>';
-    Object.entries(cVotes).forEach(([voterId, targetId])=>{
-      voteCount++;
-      const voterName = cPlayers.find(p=>p.peerId===voterId)?.name || '?';
-      const targetName = cPlayers.find(p=>p.peerId===targetId)?.name || '?';
-      log.innerHTML+=`<div class="chat-msg" style="align-items:center">
-        <div class="cmsg-av" style="background:rgba(139,124,246,.2)">${ini(voterName)}</div>
-        <div class="cmsg-text" style="font-size:14px; background:none; -webkit-text-fill-color:#fff;"><b>${voterName}</b> הצביע/ה ל-<b>${targetName}</b></div>
-      </div>`;
-    });
-  } else {
-    log.style.display = 'none';
+  if(log) {
+    if(Object.keys(cVotes).length > 0) {
+      log.style.display = 'flex';
+      log.innerHTML='<div class="section-label">הצבעות חיות:</div>';
+      Object.entries(cVotes).forEach(([voterId, targetId])=>{
+        voteCount++;
+        const voterName = cPlayers.find(p=>p.peerId===voterId)?.name || '?';
+        const targetName = cPlayers.find(p=>p.peerId===targetId)?.name || '?';
+        log.innerHTML+=`<div class="chat-msg" style="align-items:center">
+          <div class="cmsg-av" style="background:rgba(139,124,246,.2)">${ini(voterName)}</div>
+          <div class="cmsg-text" style="font-size:14px; background:none; -webkit-text-fill-color:#fff;"><b>${voterName}</b> הצביע/ה ל-<b>${targetName}</b></div>
+        </div>`;
+      });
+    } else {
+      log.style.display = 'none';
+    }
   }
 
-  $('vote-reveal-btn').style.display=(isHost && voteCount===cPlayers.length)?'block':'none';
+  if($('vote-reveal-btn')) $('vote-reveal-btn').style.display=(isHost && voteCount===cPlayers.length)?'block':'none';
 }
 
 G.castVote=function(targetId){
@@ -727,8 +749,10 @@ G.castVote=function(targetId){
     renderVoting();
   } else {
     const hConn=Object.values(conns)[0];
-    if(hConn) hConn.send({type:'submit_vote', voterId:myPeerId, targetId:targetId});
-    renderVoting(); // Re-render locally to disable further clicks
+    if(hConn) {
+       try{ hConn.send({type:'submit_vote', voterId:myPeerId, targetId:targetId}); }catch(e){}
+    }
+    renderVoting(); 
   }
 };
 
@@ -740,11 +764,11 @@ G.chatFinish=function(){
 };
 
 function showEnd(impName,word,catName,catIcon){
-  $('end-result').innerHTML=`<span class="spy-emoji">🕵️</span>
+  if($('end-result')) $('end-result').innerHTML=`<span class="spy-emoji">🕵️</span>
     <div class="rl">המתחזה היה...</div><div class="rn">${impName}</div>`;
-  $('end-word').innerHTML=`<div class="wsl">המילה הסודית</div>
+  if($('end-word')) $('end-word').innerHTML=`<div class="wsl">המילה הסודית</div>
     <div class="wsw">${catIcon} ${word} — ${catName}</div>`;
-  $('end-again-btn').style.display=isHost?'block':'none';
+  if($('end-again-btn')) $('end-again-btn').style.display=isHost?'block':'none';
   show('s-end');
 }
 
@@ -857,7 +881,6 @@ G.localFinish=function(){
   show('s-end');
 };
 
-// expose renderReveal globally for inline onclick
 window.renderReveal=renderReveal;
 window.doneReveal=doneReveal;
 </script>
