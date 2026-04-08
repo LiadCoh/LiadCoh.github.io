@@ -539,7 +539,10 @@ async function joinRoom(){
     await initPeer(myPeerId);
     var conn=peer.connect('spy_'+code,{reliable:true});
     conn.on('open',function(){
-      setupConn(conn);
+      conns[conn.peer]=conn;
+      conn.on('data',function(d){onMsg(conn.peer,d);});
+      conn.on('close',function(){delete conns[conn.peer];});
+      conn.on('error',function(){delete conns[conn.peer];});
       conn.send({type:'join',name:myName,peerId:myPeerId});
       $('join-spin').style.display='none';
       $('guest-code').textContent=code;
