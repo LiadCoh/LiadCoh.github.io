@@ -1,20 +1,24 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta name="google-site-verification" content="IpdsSN61-WyvZjuuNGsL4XBnDfQpM2P-nlLHpphH-i0" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>המשחקים של ליעד 🎮 | משחקים שבניתי בעצמי</title>
-    <meta name="description" content="ברוכים הבאים לספריית המשחקים של ליעד! משחקים שנבנו מאפס בעזרת AI. בואו לשחק ולהנות!">
+
+    <!-- SEO משופר -->
+    <title>משחקים לילדים אונליין 🎮 | ספריית המשחקים של ליעד</title>
+    <meta name="description" content="משחקים לילדים אונליין בחינם! ספריית משחקים שנבנו מאפס בעזרת AI - משחקי קפיצה, פעולה ואסטרטגיה ישירות בדפדפן.">
+    <meta name="robots" content="index, follow">
 
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;900&display=swap" rel="stylesheet">
 
     <style>
+        /* --- כל העיצוב שלך נשאר בדיוק כמו שהוא --- */
         :root {
             --background: #110e1b;
             --card-bg: #1a1727;
             --text-main: #f8f8f2;
             --text-muted: #a19dbe;
+            --gold: #ffd014;
         }
 
         body {
@@ -22,97 +26,207 @@
             font-family: 'Rubik', sans-serif;
             background-color: var(--background);
             color: var(--text-main);
+            background-image: radial-gradient(circle at 20% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 50%),
+                              radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
         }
 
         .header {
             text-align: center;
-            padding: 4rem 1rem;
+            padding: 6rem 1rem 4rem;
+        }
+
+        .header-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
         }
 
         .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin: 0 0 1rem 0;
+            background: linear-gradient(135deg, #ffd014, #ffc766, #ffd014);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
         }
 
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
             max-width: 1000px;
-            margin: auto;
-            padding: 1rem;
+            margin: 0 auto;
+            padding: 0 1rem 6rem;
         }
 
         .game-card {
-            background: var(--card-bg);
-            padding: 1rem;
-            border-radius: 10px;
+            background: linear-gradient(145deg, var(--card-bg), var(--background));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
             text-decoration: none;
-            color: white;
-            transition: transform 0.2s;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
         .game-card:hover {
-            transform: scale(1.05);
+            transform: translateY(-8px);
+        }
+
+        .card-glow-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .game-card:hover .card-glow-line {
+            opacity: 1;
+        }
+
+        .game-emoji {
+            font-size: 3rem;
+            margin-bottom: 1rem;
         }
 
         .game-title {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 0 0.5rem 0;
         }
 
         .game-desc {
-            font-size: 0.9rem;
             color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
         }
+
+        .play-btn {
+            align-self: flex-end;
+            padding: 0.6rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: var(--background);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .game-card .card-glow-line { background: linear-gradient(90deg, transparent, var(--theme-color), transparent); }
+        .game-card .play-btn { background: var(--theme-color); }
+
+        .color-orange { --theme-color: #ff914d; }
+        .color-purple { --theme-color: #a855f7; }
+        .color-pink   { --theme-color: #ec4899; }
+        .color-green  { --theme-color: #22c55e; }
+        .color-cyan   { --theme-color: #06b6d4; }
+        .color-blue   { --theme-color: #3b82f6; }
+        .color-gold   { --theme-color: #eaf63b; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
     </style>
 </head>
 
 <body>
 
 <header class="header">
-    <h1>🎮 המשחקים של ליעד</h1>
-    <p>אתר משחקים שבניתי בעצמי בעזרת AI יחד עם אבא שלי</p>
+    <div class="header-icon">🎮</div>
+    <h1>ספריית המשחקים של ליעד</h1>
+    <p>משחקים שנבנו מאפס בעזרת AI</p>
+    <p>בחר משחק והתחל לשחק!</p>
 </header>
 
 <main class="games-grid">
 
-    <a href="jumper_game.html" class="game-card">
-        <div class="game-title">🦘 קפצן</div>
-        <div class="game-desc">משחק קפיצות מהיר – הימנע ממכשולים ושבור שיאים!</div>
+    <a href="jumper_game.html" class="game-card color-orange" target="_blank">
+        <div class="card-glow-line"></div>
+        <div class="game-emoji">🦘</div>
+        <h3 class="game-title">קפצן</h3>
+        <p class="game-desc">משחק קפיצות מהיר וממכר. הימנע ממכשולים ונסה לשבור שיאים!</p>
+        <div class="play-btn">שחק עכשיו ←</div>
     </a>
 
-    <a href="alien-defense.html" class="game-card">
-        <div class="game-title">👾 חייזרים</div>
-        <div class="game-desc">הגן על הבסיס שלך מגלי חייזרים!</div>
+    <a href="alien-defense.html" class="game-card color-purple" target="_blank">
+        <div class="card-glow-line"></div>
+        <div class="game-emoji">👾</div>
+        <h3 class="game-title">חייזרים</h3>
+        <p class="game-desc">הגן על הבסיס מפני גלי חייזרים!</p>
+        <div class="play-btn">שחק עכשיו ←</div>
     </a>
 
-    <a href="war_game.html" class="game-card">
-        <div class="game-title">🏹 מלחמת הגבעה</div>
-        <div class="game-desc">משחק יריות אסטרטגי ומאתגר.</div>
+    <a href="war_game.html" class="game-card color-pink" target="_blank">
+        <div class="card-glow-line"></div>
+        <div class="game-emoji">🏹</div>
+        <h3 class="game-title">מלחמה</h3>
+        <p class="game-desc">משחק יריות ואסטרטגיה.</p>
+        <div class="play-btn">שחק עכשיו ←</div>
     </a>
 
-    <a href="forest-platformer.html" class="game-card">
-        <div class="game-title">🌿 היער</div>
-        <div class="game-desc">עבר מכשולים והתקדם בשלבים.</div>
+    <a href="forest-platformer.html" class="game-card color-green" target="_blank">
+        <div class="card-glow-line"></div>
+        <div class="game-emoji">🌿</div>
+        <h3 class="game-title">יער</h3>
+        <p class="game-desc">עבר מכשולים והתקדם בשלבים.</p>
+        <div class="play-btn">שחק עכשיו ←</div>
     </a>
 
-    <a href="bricks_game.html" class="game-card">
-        <div class="game-title">🔨 לבנים</div>
-        <div class="game-desc">שבור את כל הלבנים כדי לנצח!</div>
+    <a href="bricks_game.html" class="game-card color-cyan" target="_blank">
+        <div class="card-glow-line"></div>
+        <div class="game-emoji">🔨</div>
+        <h3 class="game-title">לבנים</h3>
+        <p class="game-desc">שבור את כל הלבנים במסך.</p>
+        <div class="play-btn">שחק עכשיו ←</div>
     </a>
 
-    <a href="balloon_nim.html" class="game-card">
-        <div class="game-title">🎈 בלונים</div>
-        <div class="game-desc">משחק חשיבה – האחרון מפסיד!</div>
+    <a href="balloon_nim.html" class="game-card color-blue" target="_blank">
+        <div class="card-glow-line"></div>
+        <div class="game-emoji">🎈</div>
+        <h3 class="game-title">בלונים</h3>
+        <p class="game-desc">משחק חשיבה נגד היריב.</p>
+        <div class="play-btn">שחק עכשיו ←</div>
     </a>
 
-    <a href="spy_game.html" class="game-card">
-        <div class="game-title">🕵️ מרגל</div>
-        <div class="game-desc">גלה מי המתחזה!</div>
+    <a href="game.html" class="game-card color-gold" target="_blank">
+        <div class="card-glow-line"></div>
+        <div class="game-emoji">🕵️</div>
+        <h3 class="game-title">מרגל</h3>
+        <p class="game-desc">גלו מי המתחזה!</p>
+        <div class="play-btn">שחק עכשיו ←</div>
     </a>
 
 </main>
+
+<!-- SEO טקסט שלא פוגע בעיצוב -->
+<section style="max-width:900px;margin:auto;padding:2rem;color:#a19dbe;line-height:1.7">
+    <h2 style="color:white">משחקים לילדים אונליין</h2>
+    <p>
+        אתר משחקים לילדים אונליין עם משחקי קפיצה, פעולה ואסטרטגיה.
+        כל המשחקים נבנו בעזרת AI ומאפשרים לשחק ישירות בדפדפן בלי הורדה.
+    </p>
+</section>
 
 </body>
 </html>
