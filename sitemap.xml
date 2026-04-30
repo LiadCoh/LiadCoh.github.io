@@ -1,6 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
   <url>
     <loc>https://liad.site/</loc>
   </url>
+
+  <url>
+    <loc>https://liad.site/jumper_game.html</loc>
+  </url>
+
+  <url>
+    <loc>https://liad.site/alien-defense.html</loc>
+  </url>
+
+  <url>
+    <loc>https://liad.site/war_game.html</loc>
+  </url>
+
+  <url>
+    <loc>https://liad.site/forest-platformer.html</loc>
+  </url>
+
+  <url>
+    <loc>https://liad.site/bricks_game.html</loc>
+  </url>
+
+  <url>
+    <loc>https://liad.site/balloon_nim.html</loc>
+  </url>
+
+  <url>
+    <loc>https://liad.site/spy_game.html</loc>
+  </url>
+
+  <url>
+    <loc>https://liad.site/bricks.html</loc>
+  </url>
+
+  <url>
+    <loc>https://liad.site/game.html</loc>
+  </url>
+
 </urlset>
